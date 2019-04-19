@@ -1,5 +1,5 @@
-# Main application entry point.
-# Launch server before launching client.
+# Warning: This isn't used anymore.
+
 using HTTP
 using HTTP.Sockets
 
@@ -52,44 +52,3 @@ function server()
         sleep(0.1)
     end
 end
-
-function socket()
-    running = true
-
-    @async begin
-        server = listen(2001)
-        while true
-            sock = accept(server)
-            @async while isopen(sock)
-                data = readline(sock, keep = true)
-                msg = split(String(data), "\n")[1]
-                println("server got: [", msg, "]")
-                if msg == "Shutdown"
-                    running = false
-                    write(sock, "Shutdown complete\n")
-                    continue
-                elseif msg == "Cmd1"
-                    response = "Recognized command::Didit1"
-                else
-                    response = "Unknown command::" * msg
-                end
-
-                write(sock, "Received\n")
-            end
-        end
-    end
-
-    println("Server running")
-    while running
-        # If sim active then poke it to run another time range. Sim will return "Complete"
-        # when the entire time duration has finished
-        # status = run(sim, range)
-        sleep(3.1)
-        println("Server running...")
-    end
-
-    println("Server shutdown")
-end
-
-# server()
-socket()

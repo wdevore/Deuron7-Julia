@@ -10,9 +10,19 @@ First run `>Julia` and `add`
 
 To make sure **CImGui** can run, go and git-clone [CImGui](https://github.com/ocornut/imgui). Then change into the examples directory and the run `demo.jl`. **CImGui** will install **ImGui** if needed. **Warning**! This could take 3-5 minutes for an initial compilation.
 
+# Howto run Deuron
+Start the server first:
+
+```
+> julia server.jl 127.0.0.1 2001
+```
+
+# **Deprecated**
 Next you need to `add` so that the server (aka simulation) and client can communicate.
 
 * ] add HTTP
 * ] add WebSockets
+# **Deprecated**
+
 
 
