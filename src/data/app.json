@@ -1,0 +1,9 @@
+{
+    "Duration": 2000,
+    "RangeEnd": 1000,
+    "RangeStart": 0,
+    "Simulation": "Sim1",
+    "TimeStep": 100,
+    "weightMax": 10,
+    "weightMin": 0
+}

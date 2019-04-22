@@ -4,6 +4,8 @@ using Sockets
 
 export send
 
+const PORT = 2001
+
 mutable struct SocClient
     socket::TCPSocket
     chan::Channel{String}
@@ -11,7 +13,7 @@ mutable struct SocClient
     function SocClient()
         o = new()
 
-        o.socket = connect(2001)
+        o.socket = connect(PORT)
         o.chan = Channel{String}(10)
 
         o
@@ -41,9 +43,13 @@ function listen(soc::SocClient)
     println("Listening...")
 end
 
+include("handlers.jl")
+
 # Called from Gui loop
 function read_channel(soc::SocClient)
-    # @async begin
+    # Yield so the socket task can get some cycles to read socket
+    yield()
+
     if isready(soc.chan)
         # println("Taking...")
         msg = take!(soc.chan)
@@ -61,80 +67,12 @@ function read_channel(soc::SocClient)
             handle_channel(soc, fields)
         end
     end
-    # end
 end
 
 function send(soc::SocClient, msg::String)
     # Put on channel for task to take!
     put!(soc.chan, msg)
     # println("Put on channel: ", msg)
-end
-
-# ----------------------------------------------------
-# Server messages
-# These are messages that have arrived from the client
-# via the socket.
-# ----------------------------------------------------
-function handle_server(soc::SocClient, fields)
-    if fields[1] == "Server"
-        handled = handle_server_cmd(soc, fields)
-
-        if !handled
-            handle_server_msg(soc, fields)
-        end
-
-        return true
-    end
-
-    false
-end
-
-function handle_server_cmd(soc::SocClient, fields)
-    if fields[2] == "Cmd"
-        println("Unknown Field[2]: ", fields)
-        return true
-    end
-    
-    false
-end
-
-function handle_server_msg(soc::SocClient, fields)
-    if fields[2] == "Msg"
-        if fields[3] == "Shutdown inprogress"
-            println("***Server is shutting down***")
-            smsg = "Client::Msg::Shutdown accepted"
-            # println("Sending to server: ", smsg)
-            println(soc.socket, smsg)
-        elseif fields[3] == "Simulation complete"
-            println("Server finished simulation")
-        else
-            println("Unknown fields: ", fields)
-        end
-
-        return true
-    end
-
-    false
-end
-# ----------------------------------------------------
-# Channel messages
-# These are message that originate from the server itself
-# need to be routed to the socket.
-# ----------------------------------------------------
-function handle_channel(soc::SocClient, fields)
-    if fields[1] == "Channel"  # From ourselves
-        if fields[2] == "Cmd"
-           # Forward to server
-            smsg = "Client::Cmd::" * fields[3]
-            # println("Sending to server: ", smsg)
-            println(soc.socket, smsg)
-            # println("Sent to server")
-        end
-
-        return true
-    end 
-    
-    false
 end
 
 end # Module ------------------------
