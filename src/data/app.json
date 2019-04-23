@@ -1,9 +1,8 @@
 {
-    "Duration": 2000,
-    "RangeEnd": 1000,
-    "RangeStart": 0,
-    "Simulation": "Sim1",
-    "TimeStep": 100,
-    "weightMax": 10,
-    "weightMin": 0
+  "RangeEnd": 1000,
+  "RangeStart": 0,
+  "Simulation": "sim_1.json",
+  "Duration": 2000,
+  "DataPath": "../data/",
+  "TimeStep": 100
 }

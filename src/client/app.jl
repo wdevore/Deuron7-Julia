@@ -6,6 +6,9 @@ using .Gui
 
 app_data = Gui.AppData()
 
+# Load app json
+Gui.load_data!(app_data)
+
 Gui.run(app_data, soc_client)
 
 # cleanup
@@ -15,4 +18,7 @@ println("Closing socket")
 
 Sockets.close(soc_client.socket)
 
+Gui.save_data(app_data)
+
 Gui.shutdown(app_data)
+

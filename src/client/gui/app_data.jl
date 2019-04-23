@@ -12,13 +12,20 @@ mutable struct AppData
 
     model::Model.ModelData
 
-    buffer16::String#Array{Cstring,1}
+    buffer1024::String
+    buffer32::String
+    buffer16::String
+    buffer8::String
 
     function AppData()
         o = new()
 
         o.model = Model.ModelData()
-        o.buffer16 = "\0"^16
+
+        o.buffer1024 = "" # "\0"^1024
+        o.buffer32 = ""
+        o.buffer16 = "" # "\0"^16
+        o.buffer8 = "" # "1\0"^7
 
         o.window = GLFW.CreateWindow(WIDTH, HEIGHT, "Deuron7")
         @assert o.window != C_NULL
@@ -44,4 +51,12 @@ mutable struct AppData
         o.float_slide = 0.0
         o
     end
+end
+
+function load_data!(data::AppData)
+    Model.load!(data.model, "../data/app.json")
+end
+
+function save_data(data::AppData)
+    Model.save(data.model, "../data/app.json")
 end

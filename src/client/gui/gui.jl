@@ -32,15 +32,6 @@ function run(data::AppData, sock::Comm.SocClient)
 
         begin_render()
 
-        # if CImGui.BeginMenuBar()
-        #     if CImGui.BeginMenu("Control")
-        #         @c CImGui.MenuItem("Start", C_NULL, &data.show_another_window)
-        #         @c CImGui.MenuItem("Stop", C_NULL, &data.show_another_window)
-        #         CImGui.EndMenu()
-        #     end
-        #     CImGui.EndMenuBar()
-        # end
-
         draw_main_panel(data, sock)
 
         if data.show_another_window
@@ -83,7 +74,7 @@ function shutdown(data::AppData)
     ImGui_ImplGlfw_Shutdown()
     CImGui.DestroyContext(data.ctx)
     
-    GLFW.DestroyWindow(data.window)    
+    GLFW.DestroyWindow(data.window)
 end
 
 end # Module ---------------------------------------------
