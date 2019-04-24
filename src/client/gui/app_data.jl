@@ -13,20 +13,12 @@ mutable struct AppData
     model::Model.ModelData
 
     buffer::String
-    buffer1024::String
-    buffer32::String
-    buffer16::String
-    buffer8::String
 
     function AppData()
         o = new()
 
         o.model = Model.ModelData()
 
-        o.buffer1024 = "" # "\0"^1024
-        o.buffer32 = ""
-        o.buffer16 = "" # "\0"^16
-        o.buffer8 = "" # "1\0"^7
         o.buffer = ""
 
         o.window = GLFW.CreateWindow(WIDTH, HEIGHT, "Deuron7")

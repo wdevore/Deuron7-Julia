@@ -2,89 +2,89 @@ function draw_synapse_panel(app::AppData, sock::Comm.SocClient)
     if CImGui.TreeNode("Synapse")
         CImGui.PushItemWidth(80)
 
-        app.buffer16 = Model.alpha(app.model)
-        returned = CImGui.InputText("Alpha", app.buffer16, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
+        app.buffer = Model.alpha(app.model)
+        returned = CImGui.InputText("Alpha", app.buffer, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
-            Model.set_alpha!(app.model, app.buffer16)
+            Model.set_alpha!(app.model, app.buffer)
         end
         CImGui.SameLine(180)
         
-        app.buffer16 = Model.ama(app.model)
-        returned = CImGui.InputText("ama", app.buffer16, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
+        app.buffer = Model.ama(app.model)
+        returned = CImGui.InputText("ama", app.buffer, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
-            Model.set_ama!(app.model, app.buffer16)
+            Model.set_ama!(app.model, app.buffer)
         end
         CImGui.SameLine(300)
 
-        app.buffer16 = Model.amb(app.model)
-        returned = CImGui.InputText("amb", app.buffer16, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
+        app.buffer = Model.amb(app.model)
+        returned = CImGui.InputText("amb", app.buffer, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
-            Model.set_amb!(app.model, app.buffer16)
+            Model.set_amb!(app.model, app.buffer)
         end
         CImGui.SameLine(450)
 
-        app.buffer16 = Model.lambda(app.model)
-        returned = CImGui.InputText("lambda", app.buffer16, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
+        app.buffer = Model.lambda(app.model)
+        returned = CImGui.InputText("lambda", app.buffer, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
-            Model.set_lambda!(app.model, app.buffer16)
+            Model.set_lambda!(app.model, app.buffer)
         end
 
         # new row
-        app.buffer16 = Model.learning_rate_fast(app.model)
-        returned = CImGui.InputText("Fast Learn Rate", app.buffer16, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
+        app.buffer = Model.learning_rate_fast(app.model)
+        returned = CImGui.InputText("Fast Learn Rate", app.buffer, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
-            Model.set_learning_rate_fast!(app.model, app.buffer16)
+            Model.set_learning_rate_fast!(app.model, app.buffer)
         end
         CImGui.SameLine(250)
 
-        app.buffer16 = Model.learning_rate_slow(app.model)
-        returned = CImGui.InputText("Slow Learn Rate", app.buffer16, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
+        app.buffer = Model.learning_rate_slow(app.model)
+        returned = CImGui.InputText("Slow Learn Rate", app.buffer, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
-            Model.set_learning_rate_slow!(app.model, app.buffer16)
+            Model.set_learning_rate_slow!(app.model, app.buffer)
         end
         CImGui.SameLine(500)
 
-        app.buffer16 = Model.mu(app.model)
-        returned = CImGui.InputText("mu", app.buffer16, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
+        app.buffer = Model.mu(app.model)
+        returned = CImGui.InputText("mu", app.buffer, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
-            Model.set_mu!(app.model, app.buffer16)
+            Model.set_mu!(app.model, app.buffer)
         end
 
         # new row
-        app.buffer16 = Model.taoI(app.model)
-        returned = CImGui.InputText("taoI", app.buffer16, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
+        app.buffer = Model.taoI(app.model)
+        returned = CImGui.InputText("taoI", app.buffer, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
-            Model.set_taoI!(app.model, app.buffer16)
+            Model.set_taoI!(app.model, app.buffer)
         end
         CImGui.SameLine(150)
 
-        app.buffer16 = Model.taoN(app.model)
-        returned = CImGui.InputText("taoN", app.buffer16, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
+        app.buffer = Model.taoN(app.model)
+        returned = CImGui.InputText("taoN", app.buffer, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
-            Model.set_taoN!(app.model, app.buffer16)
+            Model.set_taoN!(app.model, app.buffer)
         end
         CImGui.SameLine(300)
 
-        app.buffer16 = Model.taoP(app.model)
-        returned = CImGui.InputText("taoP", app.buffer16, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
+        app.buffer = Model.taoP(app.model)
+        returned = CImGui.InputText("taoP", app.buffer, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
-            Model.set_taoP!(app.model, app.buffer16)
+            Model.set_taoP!(app.model, app.buffer)
         end
 
         # new row
-        app.buffer16 = Model.distance(app.model)
-        returned = CImGui.InputText("distance", app.buffer16, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
+        app.buffer = Model.distance(app.model)
+        returned = CImGui.InputText("distance", app.buffer, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
-            Model.set_distance!(app.model, app.buffer16)
+            Model.set_distance!(app.model, app.buffer)
         end
         CImGui.PopItemWidth()
         CImGui.SameLine(200)
 
         CImGui.PushItemWidth(200)
-        app.buffer32 = Model.weight(app.model)
-        returned = CImGui.InputText("weight", app.buffer32, 32, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
+        app.buffer = Model.weight(app.model)
+        returned = CImGui.InputText("weight", app.buffer, 32, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
-            Model.set_weight!(app.model, app.buffer32)
+            Model.set_weight!(app.model, app.buffer)
         end
         CImGui.PopItemWidth()
 
