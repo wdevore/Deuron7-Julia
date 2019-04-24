@@ -45,6 +45,13 @@ function run(data::AppData, sock::Comm.SocClient)
     end
 end
 
+function begin_render()
+    # start the Dear ImGui frame
+    ImGui_ImplOpenGL3_NewFrame()
+    ImGui_ImplGlfw_NewFrame()
+    CImGui.NewFrame()
+end
+
 function end_render(data::AppData)
         # rendering
     CImGui.Render()
@@ -58,13 +65,6 @@ function end_render(data::AppData)
     
     GLFW.MakeContextCurrent(data.window)
     GLFW.SwapBuffers(data.window)
-end
-
-function begin_render()
-    # start the Dear ImGui frame
-    ImGui_ImplOpenGL3_NewFrame()
-    ImGui_ImplGlfw_NewFrame()
-    CImGui.NewFrame()
 end
 
 function shutdown(data::AppData)

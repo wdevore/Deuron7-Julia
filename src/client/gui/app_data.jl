@@ -42,6 +42,10 @@ mutable struct AppData
         CImGui.StyleColorsClassic()
         # CImGui.StyleColorsLight()
 
+        fonts_dir = joinpath(@__DIR__, "../gui/", "fonts")
+        fonts = CImGui.GetIO().Fonts
+        CImGui.AddFontFromFileTTF(fonts, joinpath(fonts_dir, "Roboto-Medium.ttf"), 20)
+
         ImGui_ImplGlfw_InitForOpenGL(o.window, true)
         ImGui_ImplOpenGL3_Init(glsl_version)
 
