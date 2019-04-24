@@ -34,9 +34,9 @@ function run(data::AppData, sock::Comm.SocClient)
 
         draw_main_panel(data, sock)
 
-        if data.show_another_window
-            draw_popup_window(data, sock)
-        end
+        # if data.show_another_window
+        #     draw_popup_window(data, sock)
+        # end
     
         end_render(data)
     

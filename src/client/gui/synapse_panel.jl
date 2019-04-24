@@ -77,6 +77,7 @@ function draw_synapse_panel(app::AppData, sock::Comm.SocClient)
         if returned
             Model.set_distance!(app.model, app.buffer16)
         end
+        CImGui.PopItemWidth()
         CImGui.SameLine(200)
 
         CImGui.PushItemWidth(200)
@@ -85,8 +86,6 @@ function draw_synapse_panel(app::AppData, sock::Comm.SocClient)
         if returned
             Model.set_weight!(app.model, app.buffer32)
         end
-        CImGui.PopItemWidth()
-
         CImGui.PopItemWidth()
 
         CImGui.TreePop()

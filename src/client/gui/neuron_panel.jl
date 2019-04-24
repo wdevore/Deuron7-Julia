@@ -8,7 +8,7 @@ function draw_neuron_panel(app::AppData, sock::Comm.SocClient)
         if returned
             Model.set_refractory_period!(app.model, app.buffer16)
         end
-        CImGui.SameLine(250)  # Shifted 200px right
+        CImGui.SameLine(250)
 
         app.buffer16 = Model.ap_max(app.model)
         returned = CImGui.InputText("APMax", app.buffer16, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
@@ -29,7 +29,7 @@ function draw_neuron_panel(app::AppData, sock::Comm.SocClient)
         if returned
             Model.set_fast_surge!(app.model, app.buffer16)
         end
-        CImGui.SameLine(250)  # Shifted 200px right
+        CImGui.SameLine(250)
 
         app.buffer16 = Model.slow_surge(app.model)
         returned = CImGui.InputText("Slow Surge", app.buffer16, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
@@ -70,6 +70,12 @@ function draw_neuron_panel(app::AppData, sock::Comm.SocClient)
         returned = CImGui.InputText("Weight max", app.buffer16, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
             Model.set_weight_max!(app.model, app.buffer16)
+        end
+
+        app.buffer = Model.active_synapse(app.model)
+        returned = CImGui.InputText("Active Synapse", app.buffer, 8, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
+        if returned
+            Model.set_active_synapse!(app.model, app.buffer)
         end
 
         CImGui.PopItemWidth()

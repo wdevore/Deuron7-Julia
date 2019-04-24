@@ -1,3 +1,7 @@
+include("neuron_panel.jl")
+include("poisson_panel.jl")
+include("synapse_panel.jl")
+
 function draw_simulation_panel(app::AppData, sock::Comm.SocClient)
     if CImGui.CollapsingHeader("Simulation")
         CImGui.PushItemWidth(80)

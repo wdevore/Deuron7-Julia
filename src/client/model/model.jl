@@ -92,13 +92,12 @@ function load_sim!(model::ModelData)
     model.sim = data;
 
     model.neuron = model.sim["Neuron"]
+    model.active_synapse = model.sim["ActiveSynapse"]
 
     dendrites = model.neuron["Dendrites"]
     compartments = dendrites["Compartments"]
     compartment = compartments[1]
     model.synapses = compartment["Synapses"]
-
-    model.active_synapse = model.sim["ActiveSynapse"]
     model.synapse = model.synapses[model.active_synapse]
 
 end
@@ -121,10 +120,10 @@ function data_path(model::ModelData)
 end
 
 function simulation(model::ModelData)
-    string(model.data["Simulation"])
+    model.data["Simulation"]
 end
 function set_simulation!(model::ModelData, v::String)
-    model.data["Simulation"] = parse(UInt64, v)
+    model.data["Simulation"] = v
 end
 
 # Samples length = Duration (seconds) * 1000000 / Timestep (microseconds)
@@ -219,6 +218,9 @@ function set_poisson_pattern_spread!(model::ModelData, v::String)
     model.sim["Poisson_Pattern_spread"] = parse(UInt64, v)
 end
 
+# --------------------------------------------------------------
+# Neuron Setter/Getters
+# --------------------------------------------------------------
 function active_synapse(model::ModelData)
     string(model.sim["ActiveSynapse"])
 end
@@ -228,10 +230,6 @@ function set_active_synapse!(model::ModelData, v::String)
     model.synapse = model.synapses[model.active_synapse]
 end
 
-
-# --------------------------------------------------------------
-# Neuron Setter/Getters
-# --------------------------------------------------------------
 function refractory_period(model::ModelData)
     neuron = model.sim["Neuron"]
     string(neuron["RefractoryPeriod"])
