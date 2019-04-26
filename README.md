@@ -18,6 +18,16 @@ Start the server first:
 > julia server.jl 127.0.0.1 2001
 ```
 
+# com_protocol_base.json
+```
+{
+  "From": "",   Client|Server
+  "To": "",     Client|Server
+  "Type": "",   Msg|Cmd
+  "Message": ""
+}
+```
+
 # app.json
 ```
 {

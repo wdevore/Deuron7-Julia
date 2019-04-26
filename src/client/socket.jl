@@ -21,10 +21,11 @@ mutable struct SocClient
 
 end
 
-# The task dealing with the socket to server
+# The task dealing with the socket to server com.
 function listen(soc::SocClient)
     println("Starting to listen to socket...")
 
+    # **Socket Task**
     @async while true
         if isopen(soc.socket)
             # println("Socket is open. Reading line...")
@@ -47,9 +48,6 @@ include("handlers.jl")
 
 # Called from Gui loop
 function read_channel(soc::SocClient)
-    # Yield so the socket task can get some cycles to read socket
-    yield()
-
     if isready(soc.chan)
         # println("Taking...")
         msg = take!(soc.chan)
@@ -66,6 +64,10 @@ function read_channel(soc::SocClient)
         if !handled
             handle_channel(soc, fields)
         end
+    else
+        # The **Socket Task** above needs time to run so we yield.
+        yield()
+        # No need to sleep because this function is called in the Gui loop
     end
 end
 
