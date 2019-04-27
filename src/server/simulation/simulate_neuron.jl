@@ -12,7 +12,6 @@ function run(chan::Channel{String})
         simulate(chan)
 
         data = JSON.parsefile("../data/com_protocol_basic.json")
-        println("data: ", data)
 
         # Populate
         data["From"] = "Simulation"

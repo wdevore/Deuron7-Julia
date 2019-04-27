@@ -4,21 +4,24 @@ include("gui/gui.jl")
 
 using .Gui
 
-app_data = Gui.AppData()
+if soc_client ≠ nothing
+
+    app_data = Gui.AppData()
 
 # Load app json
-Gui.load_data!(app_data)
+    Gui.load_data!(app_data)
 
-Gui.run(app_data, soc_client)
+    Gui.run(app_data, soc_client)
 
 # cleanup
-using Sockets
+    using Sockets
 
-println("Closing socket")
+    println("Closing socket")
 
-Sockets.close(soc_client.socket)
+    Sockets.close(soc_client.socket)
 
-Gui.save_data(app_data)
+    Gui.save_data(app_data)
 
-Gui.shutdown(app_data)
+    Gui.shutdown(app_data)
+end
 

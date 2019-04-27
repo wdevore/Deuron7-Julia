@@ -14,8 +14,12 @@ mutable struct SocClient
     function SocClient()
         o = new()
 
-        o.socket = connect(PORT)
-        o.chan = Channel{String}(10)
+        try
+            o.socket = connect(PORT)
+            o.chan = Channel{String}(10)
+        catch ex
+            return nothing
+        end
 
         o
     end
@@ -86,6 +90,14 @@ using .Comm
 println("Connecting to server...")
 soc_client = Comm.SocClient()
 
-println("Connected to server.")
+if soc_client ≠ nothing
+    println("Connected to server.")
 
-Comm.listen(soc_client)
+    Comm.listen(soc_client)
+else
+    println("#######################################################")
+    println("WARNING! Failed to connect to server.")
+    println("Start server from server folder before running client.")
+    println("#######################################################")
+end
+
