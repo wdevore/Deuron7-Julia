@@ -48,7 +48,16 @@ function draw_main_panel(app::AppData, sock::Comm.SocClient)
     CImGui.SameLine()
 
     if CImGui.Button("Stop")
-        Comm.send(sock, "Channel::Cmd::Stop")
+        # Get protocol
+        data = JSON.parsefile("../data/com_protocol_basic.json")
+
+        # Populate
+        data["From"] = "Client"
+        data["To"] = "Server"
+        data["Type"] = "Cmd"
+        data["Data"] = "Stop"
+
+        Comm.send(sock, data)
     end
     CImGui.SameLine()
 
