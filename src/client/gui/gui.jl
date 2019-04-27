@@ -21,6 +21,7 @@ include("app_data.jl")
 include("callbacks.jl")
 
 using ..Comm
+using JSON
 
 include("main_panel.jl")
 include("popup_window.jl")

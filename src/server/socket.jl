@@ -1,6 +1,7 @@
 module Server
 
 using Sockets
+using JSON
 
 using ..Simulation
 
@@ -59,19 +60,13 @@ function start(soc::SockServer)
     while soc.running
         # println("Taking...")
         if isready(soc.chan)
-            msg = take!(soc.chan)
-            # println("Msg from channel: ", msg)
-            
-            # Is the message comming from the client or this server (aka self)?
-            # Msg format: 
-            #   from          type     data
-            # Channel|Client::Cmd|Msg::data
-            fields = split(msg, "::")
+            json = take!(soc.chan)
+            # println("Msg from channel: ", json)
 
-            handled = handle_client(soc, fields)
-
-            if !handled
-                handle_channel(soc, fields)
+            if json ≠ ""
+                data = JSON.parse(json)
+    
+                handle_msg(soc, data)
             end
         else
             # The **Socket Task** above needs time to run so we yield.
@@ -85,8 +80,6 @@ function start(soc::SockServer)
 
     println("Server is shutdown")
 end
-
-
 
 end # Module -------------------------------------------
 

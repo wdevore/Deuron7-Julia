@@ -34,7 +34,16 @@ function draw_main_panel(app::AppData, sock::Comm.SocClient)
     CImGui.SameLine()
     if CImGui.Button("Simulate")
         # app.counter += 1
-        Comm.send(sock, "Channel::Cmd::Simulate")
+        # Get protocol
+        data = JSON.parsefile("../data/com_protocol_basic.json")
+
+        # Populate
+        data["From"] = "Client"
+        data["To"] = "Server"
+        data["Type"] = "Cmd"
+        data["Data"] = "Simulate"
+
+        Comm.send(sock, data)
     end
     CImGui.SameLine()
 
@@ -44,7 +53,16 @@ function draw_main_panel(app::AppData, sock::Comm.SocClient)
     CImGui.SameLine()
 
     if CImGui.Button("Shutdown Server")
-        Comm.send(sock, "Channel::Cmd::Shutdown server")
+        # Get protocol
+        data = JSON.parsefile("../data/com_protocol_basic.json")
+
+        # Populate
+        data["From"] = "Client"
+        data["To"] = "Server"
+        data["Type"] = "Cmd"
+        data["Data"] = "Shutdown Server"
+
+        Comm.send(sock, data)
     end
 
     # Global panel ************************************************

@@ -1,16 +1,42 @@
 export simulate
 
 # Runs @async
-function simulate(chan::Channel{String})
+function run(chan::Channel{String})
     x = 0
     y = 0
     println("Simulating...")
+    # running = true
+
     @async begin
-        for i in 1:1000
-            sleep(0.001)
-        end
-        println("Simulaton complete.")
-        put!(chan, "Channel::Msg::Simulation complete")
+        # running = false
+        simulate(chan)
+
+        data = JSON.parsefile("../data/com_protocol_basic.json")
+        println("data: ", data)
+
+        # Populate
+        data["From"] = "Simulation"
+        data["To"] = "Client"
+        data["Type"] = "Response"
+        data["Data"] = "Simulation Complete"
+
+        put!(chan, JSON.json(data))
     end
+
+    # Wait for sim to complete
+    # while running
+    #     sleep(0.001)
+    # end
+
+    # try
+    # catch ex
+    #     println("Exception: ", ex)
+    # end
 end
 
+function simulate(chan::Channel{String})
+    for i in 1:100
+        sleep(0.001)
+    end
+    println("Simulaton Complete.")
+end

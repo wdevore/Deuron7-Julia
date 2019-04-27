@@ -1,92 +1,49 @@
 # ----------------------------------------------------
-# Client messages
-# These are messages that have arrived from the server
-# via the socket.
+# Handlers
+# Messages can come from either the "Simulation" or the Client.
+# If it comes from the sim then we route to the socket for transmission
+# to the client.
+# If it comes from the client then we route to either the server
+# or the sim.
 # ----------------------------------------------------
-function handle_client(soc::SockServer, fields::Array{SubString{String},1})
-    if fields[1] == "Client"
-        handled = handle_client_command(soc, fields)
-
-        if !handled
-            handle_client_msg(soc, fields)
-        end
-
-        return true
+function handle_msg(soc::SockServer, data::Dict{String,Any})
+    if data["From"] == "Client" && data["To"] == "Server"
+        handle_client_to_server(soc, data)
+        return
     end
 
-    false
+    if data["From"] == "Server" && data["To"] == "Client"
+        println(soc.socket, JSON.json(data))
+        return
+    end
+
+    if data["From"] == "Simulation" && data["To"] == "Client"
+        println(soc.socket, JSON.json(data))
+        return
+    end
 end
 
-function handle_client_command(soc::SockServer, fields::Array{SubString{String},1})
-    if fields[2] == "Cmd"
-        if fields[3] == "Shutdown server"
+function handle_client_to_server(soc::SockServer, data::Dict{String,Any})
+    if data["Type"] == "Cmd"
+        if data["Data"] == "Shutdown Server"
+            # Get protocol
+            data = JSON.parsefile("../data/com_protocol_basic.json")
+
+            # Populate
+            data["From"] = "Server"
+            data["To"] = "Client"
+            data["Type"] = "Response"
+            data["Data"] = "Shutdown in progress"
+            
             # respond back to client
-            smsg = "Server::Msg::Shutdown inprogress"
-            # println("Send response to socket: ", smsg)
-            println(soc.socket, smsg)
-        elseif fields[3] == "Simulate"
-            Simulation.simulate(soc.chan)
+            println(soc.socket, JSON.json(data))
+        elseif data["Data"] == "Simulate"
+            Simulation.run(soc.chan)
         else
-            println("Unknown Cmd: ", fields)
+            println("Unknown Cmd: ", data)
         end
-
-        return true
+    elseif data["Type"] == "Response"
+        # Client has acknowledged the shutdown
+        soc.running = false
     end
-
-    false
-end
-
-function handle_client_msg(soc::SockServer, fields::Array{SubString{String},1})
-    if fields[2] == "Msg"
-        if fields[3] == "Shutdown accepted"
-            # Client has acknowledged the shutdown
-            soc.running = false
-        end
-
-        return true
-    end
-    
-    false
-end
-
-# ----------------------------------------------------
-# Channel messages
-# These are message that originate from the server itself
-# need to be routed to the socket.
-# ----------------------------------------------------
-function handle_channel(soc::SockServer, fields::Array{SubString{String},1})
-    if fields[1] == "Channel"
-        handled = handle_channel_command(soc, fields)
-
-        if !handled
-            handle_channel_msg(soc, fields)
-        end
-
-        return true
-    end
-    
-    false
-end
-
-function handle_channel_command(soc::SockServer, fields::Array{SubString{String},1})
-    if fields[2] == "Cmd"
-        println("Unknown Field[2]: ", fields)
-
-        return true
-    end
-
-    false
-end
-
-function handle_channel_msg(soc::SockServer, fields::Array{SubString{String},1})
-    if fields[2] == "Msg"
-        # Forward to client
-        smsg = "Server::Msg::" * fields[3]
-        # println("Sending to socket: ", smsg)
-        println(soc.socket, smsg)
-
-        return true
-    end
-
-    false
 end

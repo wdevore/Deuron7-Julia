@@ -1,6 +1,7 @@
 module Comm
 
 using Sockets
+using JSON
 
 export send
 
@@ -50,25 +51,26 @@ include("handlers.jl")
 function read_channel(soc::SocClient)
     if isready(soc.chan)
         # println("Taking...")
-        msg = take!(soc.chan)
-        # println("Msg from Channel: ", msg)
+        json = take!(soc.chan)
+        # println("Msg from Channel: ", json)
 
-        # Is the message comming from the server or this client?
-        # Msg format:
-        #   from          type     data
-        # Channel|Server::Cmd|Msg::data
-        fields = split(msg, "::")
+        if json ≠ ""
+            data = JSON.parse(json)
 
-        handled = handle_server(soc, fields)
-
-        if !handled
-            handle_channel(soc, fields)
+            handle_msg(soc, data)
         end
     else
         # The **Socket Task** above needs time to run so we yield.
         yield()
         # No need to sleep because this function is called in the Gui loop
     end
+end
+
+function send(soc::SocClient, data::Dict{String,Any})
+    # Put on channel for task to take!
+    chan_msg = JSON.json(data)
+    put!(soc.chan, chan_msg)
+    # println("Put on channel: ", chan_msg)
 end
 
 function send(soc::SocClient, msg::String)
