@@ -77,12 +77,6 @@ function send(soc::SocClient, data::Dict{String,Any})
     # println("Put on channel: ", chan_msg)
 end
 
-function send(soc::SocClient, msg::String)
-    # Put on channel for task to take!
-    put!(soc.chan, msg)
-    # println("Put on channel: ", msg)
-end
-
 end # Module ------------------------
 
 using .Comm

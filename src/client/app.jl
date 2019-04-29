@@ -8,12 +8,12 @@ if soc_client ≠ nothing
 
     app_data = Gui.AppData()
 
-# Load app json
+    # Load app json
     Gui.load_data!(app_data)
 
     Gui.run(app_data, soc_client)
 
-# cleanup
+    # cleanup
     using Sockets
 
     println("Closing socket")
