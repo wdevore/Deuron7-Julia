@@ -51,106 +51,146 @@ end
 # ----------------------------------------------------------------
 # Tiny
 # ----------------------------------------------------------------
+# MSB = input bit
+# LSB = output bit
+#
+#  /--- input from stream
+# v
+# 00000000
+#        ^
+#         \--- output
 mutable struct TinyDelayAxon <: AbstractAxon
     shift_reg::UInt8
-    stream::AbstractBitStream
+    delay::Int64
 
-    function MediumDelayAxon(in_stream::AbstractBitStream)
+    # Inputs
+    streams::Array{AbstractBitStream,1}
+
+    function TinyDelayAxon(delay::Int64 = 0)
+        @assert delay < 8 "TinyDelayAxon delay must be < 8"
         o = new()
         o.shift_reg = UInt8(0)
-        o.stream = in_stream
+        o.delay = delay
+        o.streams = Array{AbstractBitStream,1}[]
         o
     end
 end
 
-function output(conn::TinyDelayAxon)
-    conn.shift_reg & 0x01
+function output(axon::TinyDelayAxon)
+    # Output is LSB
+    axon.shift_reg & UInt8(1)
 end
 
-function pre!(conn::TinyDelayAxon)
-    # Take stream's output and place on input of shift register's MSB
-    conn.shift_reg = conn.shift_reg | UInt8((output(conn.stream) << 7))
+function pre!(axon::TinyDelayAxon)
+    # Combine each stream's output into a single value and
+    # send directly to output.
+    bit = UInt8(0)
+
+    for stream in axon.streams
+        step!(stream)
+        bit |= UInt8(output(stream))
+    end
+
+    # Take stream's output and place on input of shift register's delay bit
+    axon.shift_reg = axon.shift_reg | (bit << axon.delay)
 end
 
-function post!(conn::TinyDelayAxon)
+function post!(axon::TinyDelayAxon)
     # Shift register right
-    conn.shift_reg = conn.shift_reg >> 1
+    axon.shift_reg = axon.shift_reg >> 1
 end
 
 
 # ----------------------------------------------------------------
 # Small
 # ----------------------------------------------------------------
+# Note: if the global time step is 100us then the maximum delay
+# will be: 100us * 64 = 6400us = 6.4ms
 mutable struct SmallDelayAxon <: AbstractAxon
     shift_reg::UInt64
-    stream::AbstractBitStream
+    delay::Int64
 
-    function MediumDelayAxon(in_stream::AbstractBitStream)
+    # Inputs
+    streams::Array{AbstractBitStream,1}
+
+    function SmallDelayAxon(delay::Int64 = 0)
+        @assert delay < 64 "SmallDelayAxon delay must be < 64"
         o = new()
         o.shift_reg = UInt64(0)
-        o.stream = in_stream
+        o.delay = delay
+        o.streams = Array{AbstractBitStream,1}[]
         o
     end
 end
 
-function output(conn::SmallDelayAxon)
-    conn.shift_reg & 0x00000001
+function output(axon::SmallDelayAxon)
+    # Output is LSB
+    axon.shift_reg & UInt64(1)
 end
 
-function pre!(conn::SmallDelayAxon)
-    # Take stream's output and place on input of shift register's MSB
-    conn.shift_reg = conn.shift_reg | (output(conn.stream) << 63)
+function pre!(axon::SmallDelayAxon)
+    # Combine each stream's output into a single value and
+    # send directly to output.
+    bit = UInt64(0)
+
+    for stream in axon.streams
+        step!(stream)
+        bit |= UInt64(output(stream))
+    end
+
+    # Take stream's output and place on input of shift register's delay bit
+    axon.shift_reg = axon.shift_reg | (bit << axon.delay)
 end
 
-function post!(conn::SmallDelayAxon)
+function post!(axon::SmallDelayAxon)
     # Shift register right
-    conn.shift_reg = conn.shift_reg >> 1
+    axon.shift_reg = axon.shift_reg >> 1
 end
 
 # ----------------------------------------------------------------
 # Medium
 # ----------------------------------------------------------------
+# Note: if the global time step is 100us then the maximum delay
+# will be: 100us * 128 = 12800us = 12.8ms
 mutable struct MediumDelayAxon <: AbstractAxon
-    shift_reg::Array{UInt64}
-    len::Int64
+    shift_reg::UInt128
+    delay::Int64
 
-    stream::AbstractBitStream
+    # Inputs
+    streams::Array{AbstractBitStream,1}
 
-    function MediumDelayAxon(in_stream::AbstractBitStream, delay_size::Int64 = 4)
+    function MediumDelayAxon(delay::Int64 = 0)
+        @assert delay < 128 "MediumDelayAxon delay must be < 128"
         o = new()
-        o.shift_reg = zeros(UInt64, delay_size)
-        o.len = delay_size
-        o.stream = in_stream
+        o.shift_reg = UInt128(0)
+        o.delay = delay
+        o.streams = Array{AbstractBitStream,1}[]
         o
     end
 end
 
-function output(conn::MediumDelayAxon)
-    conn.shift_reg[conn.len] & 0x00000001
+function output(axon::MediumDelayAxon)
+    # Output is LSB
+    axon.shift_reg & UInt128(1)
 end
 
-function pre!(conn::MediumDelayAxon)
-    # Take stream's output and place on input of shift register's MSB
-    #
-    # MSB                          LSB (output)
-    #      Shift direction -->
-    #
-    # MSB
-    # -------- 1
-    # -------- 2
-    # -------- 3
-    # -------- 4   LSB
-    #
-    conn.shift_reg[1] = output(conn.stream) << 63
-end
+function pre!(axon::MediumDelayAxon)
+    # Combine each stream's output into a single value and
+    # send directly to output.
+    bit = UInt128(0)
 
-function post!(conn::MediumDelayAxon)
-    # Shift everything from MSB to LSB
-    # TODO NOT COMPLETE
-    for r in conn.len:2
-        conn.shift_reg[r] = conn.shift_reg[r] >> 1
-        conn.shift_reg[r] = conn.shift_reg[r] | (conn.shift_reg[r - 1] & 0x00000001)
+    for stream in axon.streams
+        step!(stream)
+        bit |= UInt128(output(stream))
     end
+
+    # Take stream's output and place on input of shift register's delay bit
+    axon.shift_reg = axon.shift_reg | (bit << axon.delay)
+end
+
+function post!(axon::MediumDelayAxon)
+    # Shift register right
+    axon.shift_reg = axon.shift_reg >> 1
 end
 
 # ----------------------------------------------------------------
