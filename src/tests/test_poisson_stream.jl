@@ -18,17 +18,17 @@ function test_stream_reset()
     spikes = []
 
     for i in 1:TOTAL_SPIKES
-        generate(stream)
+        step!(stream)
         push!(spikes, output(stream))
         # println(output(stream))
     end
 
-    reset(stream)
+    reset!(stream)
     nisi = stream.isi
     @assert isi == nisi "ISI should be equal"
     # println("isi: ", stream.isi)
     for i in 1:TOTAL_SPIKES
-        generate(stream)
+        step!(stream)
         @assert output(stream) == spikes[i] "Invalid spike at index: $i"
         # println(output(stream))
     end
@@ -43,7 +43,7 @@ function test_stream()
     # println("isi: ", stream.isi)
     spikes = []
     for i in 1:TOTAL_SPIKES
-        generate(stream)
+        step!(stream)
         push!(spikes, output(stream))
         # println(output(stream))
     end
@@ -53,7 +53,7 @@ function test_stream()
     # println("isi: ", stream.isi)
     atleast_one_ne = false
     for i in 1:TOTAL_SPIKES
-        generate(stream)
+        step!(stream)
 
         if output(stream) != spikes[i] 
             atleast_one_ne = true
@@ -72,7 +72,7 @@ function test_stream_two()
 
     spikes = []
     for i in 1:TOTAL_SPIKES
-        generate(stream)
+        step!(stream)
         # println(output(stream))
         push!(spikes, output(stream))
     end
@@ -82,7 +82,7 @@ function test_stream_two()
     # println("----------")
 
     for i in 1:TOTAL_SPIKES
-        generate(stream2)
+        step!(stream2)
         # println(output(stream))
         if output(stream2) != spikes[i] 
             atleast_one_ne = true

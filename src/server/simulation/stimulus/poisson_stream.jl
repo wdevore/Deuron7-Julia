@@ -1,5 +1,5 @@
 # Note:
-# Possible generator:
+# Another Possible poisson generator:
 # https://github.com/JuliaStats/Distributions.jl/blob/master/src/univariate/discrete/poisson.jl
 
 # Note on randjump():
@@ -10,11 +10,12 @@ using Future
 
 # The output of the stream can connect 1 or more Connections.
 mutable struct PoissonStream <: AbstractBitStream
-    base::BaseStream
+    base::BaseData{UInt8}
     seed::Int64
 
     # The Interspike interval (ISI) counter is populated by a value.
-    # When the counter reaches 0 a spike is placed on the output.
+    # When the counter reaches 0 a spike is placed on the output
+    # for single pass.
     isi::UInt64
 
     # This equal to lamba rates.
@@ -24,7 +25,7 @@ mutable struct PoissonStream <: AbstractBitStream
 
     function PoissonStream(seed::UInt64, firing_rate::Float64 = 0.002)
         o = new()
-        o.base = BaseStream()
+        o.base = BaseData{UInt8}()
         o.firing_rate = firing_rate
         o.seed = seed
         reset!(o)
@@ -32,8 +33,8 @@ mutable struct PoissonStream <: AbstractBitStream
     end
 end
 
-# Create an event per interval of time. For example, spikes in a 1 sec span.
-# A firing rate in rate/ms, for example, 0.2 in 1ms (0.2/1)
+# Create an event per interval of time, for example, spikes in a 1 sec span.
+# A firing rate given in rate/ms, for example, 0.2 in 1ms (0.2/1)
 # or 200 in 1sec (200/1000ms)
 function next!(stream::PoissonStream) 
     p = -log(1.0 - rand(stream.rng, 1)[1]) / stream.firing_rate

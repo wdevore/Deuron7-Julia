@@ -6,7 +6,7 @@
 # Direct
 # ----------------------------------------------------------------
 mutable struct DirectAxon <: AbstractAxon
-    output::UInt8 # i.e. input
+    base::BaseData{UInt8}
     len::Integer
 
     # Inputs
@@ -14,8 +14,8 @@ mutable struct DirectAxon <: AbstractAxon
 
     function DirectAxon()
         o = new()
-        o.output = UInt8(0)
-        o.streams = Array{AbstractBitStream,1}[]
+        o.base = BaseData{UInt8}()
+        o.streams = Array{AbstractBitStream,1}()
         o
     end
 end
@@ -25,18 +25,18 @@ function add_stream!(axon::AbstractAxon, stream::AbstractBitStream)
 end
 
 function output(axon::DirectAxon)
-    axon.output
+    axon.base.output
 end
 
 function pre!(axon::DirectAxon)
     # Combine each stream's output into a single value and
     # send directly to output.
-    axon.output = 0
+    axon.base.output = 0
 
     for stream in axon.streams
         # Make sure stream output is ready
         step!(stream)
-        axon.output |= output(stream)
+        axon.base.output |= output(stream)
     end
 end
 
@@ -71,7 +71,7 @@ mutable struct TinyDelayAxon <: AbstractAxon
         o = new()
         o.shift_reg = UInt8(0)
         o.delay = delay
-        o.streams = Array{AbstractBitStream,1}[]
+        o.streams = Array{AbstractBitStream,1}()
         o
     end
 end
@@ -118,7 +118,7 @@ mutable struct SmallDelayAxon <: AbstractAxon
         o = new()
         o.shift_reg = UInt64(0)
         o.delay = delay
-        o.streams = Array{AbstractBitStream,1}[]
+        o.streams = Array{AbstractBitStream,1}()
         o
     end
 end
@@ -164,7 +164,7 @@ mutable struct MediumDelayAxon <: AbstractAxon
         o = new()
         o.shift_reg = UInt128(0)
         o.delay = delay
-        o.streams = Array{AbstractBitStream,1}[]
+        o.streams = Array{AbstractBitStream,1}()
         o
     end
 end

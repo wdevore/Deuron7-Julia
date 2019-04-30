@@ -102,5 +102,28 @@ function test_axon_delay_small()
     println("Passed")
 end
 
+function test_axon_delay_small2()
+    println("Testing Axon small delay")
+    stream = Simulation.PoissonStream(UInt64(13163), 0.2)
+    stream2 = Simulation.PoissonStream(UInt64(11862), 0.2)
+
+    axon = Simulation.MediumDelayAxon(32)
+    Simulation.add_stream!(axon, stream)
+    Simulation.add_stream!(axon, stream2)
+
+    # 0001001000  = stream
+
+    # expected_output = [0,0,0,0,0,1,0,0,1,0]
+    for i in 1:80
+        Simulation.pre!(axon)
+        print(bitstring(axon.shift_reg), " : $i pre -- ")
+        Simulation.post!(axon)
+        println(bitstring(axon.shift_reg), " : $i post")
+        # @assert Simulation.output(axon) == expected_output[i] "Expected output did not match: $i"
+    end
+
+    println("Passed")
+end
+
 
 test_axon_delay_small()
