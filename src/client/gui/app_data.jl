@@ -14,6 +14,8 @@ mutable struct AppData
 
     buffer::String
 
+    spikes_graph::Graphs.SpikeScatterGraph
+
     function AppData()
         o = new()
 
@@ -47,6 +49,9 @@ mutable struct AppData
         
         o.counter = 0
         o.float_slide = 0.0
+
+        o.spikes_graph = Graphs.SpikeScatterGraph()
+        
         o
     end
 end

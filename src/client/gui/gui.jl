@@ -17,13 +17,15 @@ const HEIGHT = UInt32(Float64(WIDTH) / DISPLAY_RATIO)
 using ..Model
 
 include("init.jl")
+include("graphs/graphs.jl")
+
+using .Graphs
+
 include("app_data.jl")
 include("callbacks.jl")
-include("graphs/graphs.jl")
 
 using ..Comm
 using JSON
-using .Graphs
 
 include("main_panel.jl")
 include("popup_window.jl")
@@ -39,10 +41,6 @@ function run(data::AppData, sock::Comm.SocClient)
 
         Graphs.draw(data.spikes_graph)
 
-        # if data.show_another_window
-        #     draw_popup_window(data, sock)
-        # end
-    
         end_render(data)
     
         # App communications
