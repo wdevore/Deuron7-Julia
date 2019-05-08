@@ -30,3 +30,4 @@ abstract type AbstractBitStream end
 abstract type AbstractAxon end
 
 
+abstract type AbstractDelay end

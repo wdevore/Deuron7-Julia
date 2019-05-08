@@ -7,6 +7,7 @@
 # The samples are a 2D array: zeros(UInt8, synapses, duration)
 
 mutable struct SpikeScatterGraph <: AbstractGraph
+    # This array grows as more Chunks are completed by the simulation.
     poi_samples::Array{UInt8,2}
 
     function SpikeScatterGraph()
@@ -17,7 +18,12 @@ mutable struct SpikeScatterGraph <: AbstractGraph
 end
 
 function append!(graph::SpikeScatterGraph, data::Array{UInt8,2})
-    append!(graph.poi_samples, data)
+    # Append each track of samples
+    if graph.poi_samples == nothing
+        graph.poi_samples = data
+    else
+        append!(graph.poi_samples, data)
+    end
 end
 
 function draw_header(graph::SpikeScatterGraph)

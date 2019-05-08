@@ -24,8 +24,9 @@ Start the server first:
 {
   "From": "",   Client|Server
   "To": "",     Client|Server
-  "Type": "",   Msg|Cmd
-  "Message": ""
+  "Type": "",   Any
+  "Data1": ""
+  ...
 }
 ```
 

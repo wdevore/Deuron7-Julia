@@ -22,7 +22,6 @@ include("graphs/graphs.jl")
 using .Graphs
 
 include("app_data.jl")
-include("callbacks.jl")
 
 using ..Comm
 using JSON

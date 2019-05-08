@@ -113,10 +113,25 @@ function save_sim(model::ModelData)
 end
 
 # --------------------------------------------------------------
+# Calculated Values
+# --------------------------------------------------------------
+function total_simulation_time(model::ModelData)
+    duration = Model.duration(model)
+    duration
+end
+
+# Span is = Duration
+function span_time(model::ModelData)
+    duration = Model.duration(model)
+    spans = Model.spans(model)
+    Int64(duration / spans)
+end
+
+# --------------------------------------------------------------
 # Application Setter/Getters
 # --------------------------------------------------------------
 function data_path(model::ModelData)
-    string(model.data["DataPath"])
+    model.data["DataPath"]
 end
 
 function simulation(model::ModelData)
@@ -126,44 +141,60 @@ function set_simulation!(model::ModelData, v::String)
     model.data["Simulation"] = v
 end
 
-# Samples length = Duration (seconds) * 1000000 / Timestep (microseconds)
-# Example:
-# 2 second duration at 10us steps = 2*1000000/10 = 200000 samples.
-# Example:
-# 2 second duration at 1ms(1000us) steps = 2*1000000/1000 = 2000 samples.
-# Duration length also equal to sample length.
+# Duration is how long a Span is in units of time.
+# Thus the total simulation time = Duration * Spans
 function duration(model::ModelData)
-    string(model.data["Duration"])
+    model.data["Duration"]
 end
 function set_duration!(model::ModelData, v::String)
-    model.data["Duration"] = parse(UInt64, v)
+    model.data["Duration"] = parse(Int64, v)
 end
 
 function range_start(model::ModelData)
-    string(model.data["RangeStart"])
+    model.data["RangeStart"]
 end
 function set_range_start!(model::ModelData, v::String)
-    model.data["RangeStart"] = parse(UInt64, v)
+    model.data["RangeStart"] = parse(Int64, v)
 end
 
 function range_end(model::ModelData)
-    string(model.data["RangeEnd"])
+    model.data["RangeEnd"]
 end
 function set_range_end!(model::ModelData, v::String)
-    model.data["RangeEnd"] = parse(UInt64, v)
+    model.data["RangeEnd"] = parse(Int64, v)
 end
 
-# 1 second = 1000ms = 1000000us
-#          = 0.001s  = 0.000001s
-# 10us = 0.00001s = 10/1000000
-# Time step units. Could be 1ms or 100us = 0.1ms or 10us = 0.01ms
-# Convert microseconds to seconds: microseconds/1000000
-function time_step(model::ModelData)
-    string(model.data["TimeStep"])
+function spans(model::ModelData)
+    model.data["Spans"]
 end
-function set_time_step!(model::ModelData, v::String)
-    model.data["TimeStep"] = parse(UInt64, v)
+function set_spans!(model::ModelData, v::String)
+    model.data["Spans"] = parse(Int64, v)
 end
+
+function time_scale(model::ModelData)
+    model.data["TimeScale"]
+end
+function set_time_scale!(model::ModelData, v::String)
+    set_time_scale!(model, parse(Int64, v))
+end
+function set_time_scale!(model::ModelData, v::Int64)
+    model.data["TimeScale"] = v
+end
+
+function data_output_path(model::ModelData)
+    model.data["DataOutputPath"]
+end
+function set_data_output_path!(model::ModelData, v::String)
+    model.data["DataOutputPath"] = v
+end
+
+function poisson_files(model::ModelData)
+    model.data["PoissonFiles"]
+end
+function set_poisson_files!(model::ModelData, v::String)
+    model.data["PoissonFiles"] = v
+end
+
 
 # --------------------------------------------------------------
 # Simulation Setter/Getters
@@ -171,10 +202,20 @@ end
 # Streams
 # Firing rate = spikes over an interval of time.
 function firing_rate(model::ModelData)
-    string(model.sim["Firing_Rate"])
+    model.sim["Firing_Rate"]
 end
 function set_firing_rate!(model::ModelData, v::String)
-    model.sim["Firing_Rate"] = parse(Float64, v)
+    set_firing_rate!(model, parse(Float64, v))
+end
+function set_firing_rate!(model::ModelData, v::Float64)
+    model.sim["Firing_Rate"] = v
+end
+
+function synapses(model::ModelData)
+    model.sim["Synapses"]
+end
+function synapses!(model::ModelData, v::String)
+    model.sim["Synapses"] = parse(Int64, v)
 end
 
 # If Hertz = 0 then stimulus is distributed as poisson.
@@ -183,126 +224,126 @@ end
 # This means a stimulus is generated every 100ms which also means the
 # Inter-spike-interval (ISI) is fixed at 100ms
 function hertz(model::ModelData)
-    string(model.sim["Hertz"])
+    model.sim["Hertz"]
 end
 function set_hertz!(model::ModelData, v::String)
-    model.sim["Hertz"] = parse(UInt64, v)
+    model.sim["Hertz"] = parse(Int64, v)
 end
 
 # Shrinks or expands ISI for stimulus
 function stimulus_scaler(model::ModelData)
-    string(model.sim["StimulusScaler"])
+    model.sim["StimulusScaler"]
 end
 function set_stimulus_scaler!(model::ModelData, v::String)
-    model.sim["StimulusScaler"] = parse(UInt64, v)
+    model.sim["StimulusScaler"] = parse(Int64, v)
 end
 
 function poisson_pattern_min(model::ModelData)
-    string(model.sim["Poisson_Pattern_min"])
+    model.sim["Poisson_Pattern_min"]
 end
 function set_poisson_pattern_min!(model::ModelData, v::String)
-    model.sim["Poisson_Pattern_min"] = parse(UInt64, v)
+    model.sim["Poisson_Pattern_min"] = parse(Int64, v)
 end
 
 function poisson_pattern_max(model::ModelData)
-    string(model.sim["Poisson_Pattern_max"])
+    model.sim["Poisson_Pattern_max"]
 end
 function set_poisson_pattern_max!(model::ModelData, v::String)
-    model.sim["Poisson_Pattern_max"] = parse(UInt64, v)
+    model.sim["Poisson_Pattern_max"] = parse(Int64, v)
 end
 
 function poisson_pattern_spread(model::ModelData)
-    string(model.sim["Poisson_Pattern_spread"])
+    model.sim["Poisson_Pattern_spread"]
 end
 function set_poisson_pattern_spread!(model::ModelData, v::String)
-    model.sim["Poisson_Pattern_spread"] = parse(UInt64, v)
+    model.sim["Poisson_Pattern_spread"] = parse(Int64, v)
 end
 
 # --------------------------------------------------------------
 # Neuron Setter/Getters
 # --------------------------------------------------------------
 function active_synapse(model::ModelData)
-    string(model.sim["ActiveSynapse"])
+    model.sim["ActiveSynapse"]
 end
 function set_active_synapse!(model::ModelData, v::String)
-    model.sim["ActiveSynapse"] = parse(UInt64, v)
+    model.sim["ActiveSynapse"] = parse(Int64, v)
     model.active_synapse = model.sim["ActiveSynapse"]
     model.synapse = model.synapses[model.active_synapse]
 end
 
 function refractory_period(model::ModelData)
     neuron = model.sim["Neuron"]
-    string(neuron["RefractoryPeriod"])
+    neuron["RefractoryPeriod"]
 end
 function set_refractory_period!(model::ModelData, v::String)
     model.neuron["RefractoryPeriod"] = parse(Float64, v)
 end
 
 function ap_max(model::ModelData)
-    string(model.neuron["APMax"])
+    model.neuron["APMax"]
 end
 function set_ap_max!(model::ModelData, v::String)
     model.neuron["APMax"] = parse(Float64, v)
 end
 
 function threshold(model::ModelData)
-    string(model.neuron["Threshold"])
+    model.neuron["Threshold"]
 end
 function set_threshold!(model::ModelData, v::String)
     model.neuron["Threshold"] = parse(Float64, v)
 end
 
 function fast_surge(model::ModelData)
-    string(model.neuron["nFastSurge"])
+    model.neuron["nFastSurge"]
 end
 function set_fast_surge!(model::ModelData, v::String)
     model.neuron["nFastSurge"] = parse(Float64, v)
 end
 
 function slow_surge(model::ModelData)
-    string(model.neuron["nSlowSurge"])
+    model.neuron["nSlowSurge"]
 end
 function set_slow_surge!(model::ModelData, v::String)
     model.neuron["nSlowSurge"] = parse(Float64, v)
 end
 
 function slow_surge(model::ModelData)
-    string(model.neuron["nSlowSurge"])
+    model.neuron["nSlowSurge"]
 end
 function set_slow_surge!(model::ModelData, v::String)
     model.neuron["nSlowSurge"] = parse(Float64, v)
 end
 
 function tao(model::ModelData)
-    string(model.neuron["ntao"])
+    model.neuron["ntao"]
 end
 function set_tao!(model::ModelData, v::String)
     model.neuron["ntao"] = parse(Float64, v)
 end
 
 function tao_j(model::ModelData)
-    string(model.neuron["ntaoJ"])
+    model.neuron["ntaoJ"]
 end
 function set_tao_j!(model::ModelData, v::String)
     model.neuron["ntaoJ"] = parse(Float64, v)
 end
 
 function tao_s(model::ModelData)
-    string(model.neuron["ntaoS"])
+    model.neuron["ntaoS"]
 end
 function set_tao_s!(model::ModelData, v::String)
     model.neuron["ntaoS"] = parse(Float64, v)
 end
 
 function weight_max(model::ModelData)
-    string(model.neuron["wMax"])
+    model.neuron["wMax"]
 end
 function set_weight_max!(model::ModelData, v::String)
     model.neuron["wMax"] = parse(Float64, v)
 end
 
 function weight_min(model::ModelData)
-    string(model.neuron["wMin"])
+    model.neuron["wMin"]
 end
 function set_weight_min!(model::ModelData, v::String)
     model.neuron["wMin"] = parse(Float64, v)
@@ -312,77 +353,77 @@ end
 # Synapse Setter/Getters
 # --------------------------------------------------------------
 function id(model::ModelData)
-    string(model.synapse["id"])
+    model.synapse["id"]
 end
 function set_id!(model::ModelData, v::String)
     model.synapse["id"] = parse(Float64, v)
 end
 
 function alpha(model::ModelData)
-    string(model.synapse["alpha"])
+    model.synapse["alpha"]
 end
 function set_alpha!(model::ModelData, v::String)
     model.synapse["alpha"] = parse(Float64, v)
 end
 
 function ama(model::ModelData)
-    string(model.synapse["ama"])
+    model.synapse["ama"]
 end
 function set_ama!(model::ModelData, v::String)
     model.synapse["ama"] = parse(Float64, v)
 end
 
 function amb(model::ModelData)
-    string(model.synapse["amb"])
+    model.synapse["amb"]
 end
 function set_amb!(model::ModelData, v::String)
     model.synapse["amb"] = parse(Float64, v)
 end
 
 function lambda(model::ModelData)
-    string(model.synapse["lambda"])
+    model.synapse["lambda"]
 end
 function set_lambda!(model::ModelData, v::String)
     model.synapse["lambda"] = parse(Float64, v)
 end
 
 function learning_rate_fast(model::ModelData)
-    string(model.synapse["learningRateFast"])
+    model.synapse["learningRateFast"]
 end
 function set_learning_rate_fast!(model::ModelData, v::String)
     model.synapse["learningRateFast"] = parse(Float64, v)
 end
 
 function learning_rate_slow(model::ModelData)
-    string(model.synapse["learningRateSlow"])
+    model.synapse["learningRateSlow"]
 end
 function set_learning_rate_slow!(model::ModelData, v::String)
     model.synapse["learningRateSlow"] = parse(Float64, v)
 end
 
 function mu(model::ModelData)
-    string(model.synapse["mu"])
+    model.synapse["mu"]
 end
 function set_mu!(model::ModelData, v::String)
     model.synapse["mu"] = parse(Float64, v)
 end
 
 function taoI(model::ModelData)
-    string(model.synapse["taoI"])
+    model.synapse["taoI"]
 end
 function set_taoI!(model::ModelData, v::String)
     model.synapse["taoI"] = parse(Float64, v)
 end
 
 function taoN(model::ModelData)
-    string(model.synapse["taoN"])
+    model.synapse["taoN"]
 end
 function set_taoN!(model::ModelData, v::String)
     model.synapse["taoN"] = parse(Float64, v)
 end
 
 function taoP(model::ModelData)
-    string(model.synapse["taoP"])
+    model.synapse["taoP"]
 end
 function set_taoP!(model::ModelData, v::String)
     model.synapse["taoP"] = parse(Float64, v)
@@ -390,14 +431,14 @@ end
 
 # Distance from soma
 function distance(model::ModelData)
-    string(model.synapse["distance"])
+    model.synapse["distance"]
 end
 function set_distance!(model::ModelData, v::String)
     model.synapse["distance"] = parse(Float64, v)
 end
 
 function weight(model::ModelData)
-    string(model.synapse["w"])
+    model.synapse["w"]
 end
 function set_weight!(model::ModelData, v::String)
     model.synapse["w"] = parse(Float64, v)

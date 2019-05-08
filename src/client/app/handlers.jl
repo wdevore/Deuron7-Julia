@@ -44,10 +44,19 @@ function handle_server_to_client(soc::SocClient, data::Dict{String,Any})
     end
 end
 
+# Handles message arriving from the simulation--running on the server.
 function handle_simulation_to_client(soc::SocClient, data::Dict{String,Any})
     if data["Type"] == "Response"
         if data["Data"] == "Simulation Complete"
             println("Server finished simulation")
+        end
+    elseif data["Type"] == "Status"
+        if data["Data"] == "Span Completed"
+            if data["Data1"] == "Poisson Samples"
+                println(data)
+            end
+    
+            # println(data["Data2"])
         end
     end
 end

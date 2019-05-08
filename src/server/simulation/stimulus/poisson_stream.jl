@@ -28,6 +28,7 @@ mutable struct PoissonStream <: AbstractBitStream
         o.base = BaseData{UInt8}()
         o.firing_rate = firing_rate
         o.seed = seed
+        o.isi = 0
         reset!(o)
         o
     end
@@ -48,7 +49,7 @@ end
 
 function step!(stream::PoissonStream)
     # Check ISI counter
-   	if stream.isi == 0 
+   	if stream.isi == 0
 	    # Time to generate a spike
         stream.base.output = 1
         stream.isi = next!(stream)

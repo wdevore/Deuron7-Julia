@@ -13,12 +13,20 @@ function handle_msg(soc::SockServer, data::Dict{String,Any})
     end
 
     if data["From"] == "Server" && data["To"] == "Client"
-        println(soc.socket, JSON.json(data))
+        if isopen(soc.socket)
+            println(soc.socket, JSON.json(data))
+        else
+            println("Server-to-Client must have shutdown. Can't send.")
+        end
         return
     end
 
     if data["From"] == "Simulation" && data["To"] == "Client"
-        println(soc.socket, JSON.json(data))
+        if isopen(soc.socket)
+            println(soc.socket, JSON.json(data))
+        else
+            println("Simulation-to-Client must have shutdown. Can't send.")
+        end
         return
     end
 end
@@ -36,9 +44,14 @@ function handle_client_to_server(soc::SockServer, data::Dict{String,Any})
             data["Data"] = "Shutdown in progress"
             
             # respond back to client
-            println(soc.socket, JSON.json(data))
+            if isopen(soc.socket)
+                println(soc.socket, JSON.json(data))
+            else
+                println("Client-to-Server must have shutdown. Can't send.")
+            end
         elseif data["Data"] == "Simulate"
-            Simulation.run(soc.chan)
+            # Simulation.run(soc.chan, data["Data1"])
+            Simulation.run_debug(soc.chan, data["Data1"])
         else
             println("Unknown Cmd: ", data)
         end

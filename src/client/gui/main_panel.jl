@@ -33,15 +33,15 @@ function draw_main_panel(app::AppData, sock::Comm.SocClient)
 
     CImGui.SameLine()
     if CImGui.Button("Simulate")
-        # app.counter += 1
         # Get protocol
-        data = JSON.parsefile("../data/com_protocol_basic.json")
+        data = app.basic_protocol
 
         # Populate
         data["From"] = "Client"
         data["To"] = "Server"
         data["Type"] = "Cmd"
         data["Data"] = "Simulate"
+        data["Data1"] = Model.simulation(app.model)
 
         Comm.send(sock, data)
     end
@@ -49,7 +49,7 @@ function draw_main_panel(app::AppData, sock::Comm.SocClient)
 
     if CImGui.Button("Stop")
         # Get protocol
-        data = JSON.parsefile("../data/com_protocol_basic.json")
+        data = app.basic_protocol
 
         # Populate
         data["From"] = "Client"
@@ -63,7 +63,7 @@ function draw_main_panel(app::AppData, sock::Comm.SocClient)
 
     if CImGui.Button("Shutdown Server")
         # Get protocol
-        data = JSON.parsefile("../data/com_protocol_basic.json")
+        data = app.basic_protocol
 
         # Populate
         data["From"] = "Client"

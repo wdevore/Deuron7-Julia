@@ -1,6 +1,6 @@
 
-include("model/model.jl")
-include("gui/gui.jl")
+include("../../data/model/model.jl")
+include("../gui/gui.jl")
 
 using .Gui
 

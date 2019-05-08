@@ -15,6 +15,6 @@
 # add CSyntax
 # add CImGui
 
-include("socket.jl")
+include("app/socket.jl")
 
-include("app.jl")
+include("app/app.jl")

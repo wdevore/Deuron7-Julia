@@ -6,7 +6,7 @@ function draw_simulation_panel(app::AppData, sock::Comm.SocClient)
     if CImGui.CollapsingHeader("Simulation")
         CImGui.PushItemWidth(80)
 
-        app.buffer = Model.stimulus_scaler(app.model)
+        app.buffer = string(Model.stimulus_scaler(app.model))
         returned = CImGui.InputText("Stimulus Scaler", app.buffer, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
             # println("enter: [", app.buffer, "]")
@@ -17,7 +17,7 @@ function draw_simulation_panel(app::AppData, sock::Comm.SocClient)
         end
         CImGui.SameLine(300)
 
-        app.buffer = Model.hertz(app.model)
+        app.buffer = string(Model.hertz(app.model))
         returned = CImGui.InputText("Hertz (ISI)", app.buffer, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
             Model.set_hertz!(app.model, app.buffer)

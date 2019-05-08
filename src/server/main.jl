@@ -6,7 +6,7 @@
 
 include("simulation/simulation.jl")
 
-include("socket.jl")
+include("app/socket.jl")
 
 using .Server
 

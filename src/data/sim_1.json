@@ -1,7 +1,8 @@
 {
   "ActiveSynapse": 1,
-  "Firing_Rate": 0.005,
+  "Firing_Rate": 0.02,
   "Hertz": 20,
+  "Synapses": 10,
   "Neuron": {
     "Dendrites": {
       "Compartments": [

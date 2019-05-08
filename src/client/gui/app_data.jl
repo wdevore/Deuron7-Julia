@@ -16,6 +16,8 @@ mutable struct AppData
 
     spikes_graph::Graphs.SpikeScatterGraph
 
+    basic_protocol::Dict{String,Any}
+
     function AppData()
         o = new()
 
@@ -49,6 +51,8 @@ mutable struct AppData
         
         o.counter = 0
         o.float_slide = 0.0
+
+        o.basic_protocol = JSON.parsefile("../data/com_protocol_basic.json")
 
         o.spikes_graph = Graphs.SpikeScatterGraph()
         
