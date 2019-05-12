@@ -52,7 +52,7 @@ function simulate(chan::Channel{String}, model::Model.ModelData)
 
     # Run each span
     for span in 1:spans
-        # We "reset" the samples only for the next span.
+        # We "reset" the samples for the next span.
         config_samples!(samples, synapses, span_time)
     
         # "t" is a single time step representing a single TimeScale.

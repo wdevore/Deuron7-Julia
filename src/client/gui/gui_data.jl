@@ -1,4 +1,4 @@
-mutable struct AppData
+mutable struct GuiData
     # export window
     window::GLFW.Window
     ctx::Ptr{Nothing}
@@ -10,18 +10,13 @@ mutable struct AppData
     display_w::Int32
     display_h::Int32
 
-    model::Model.ModelData
-
     buffer::String
 
     spikes_graph::Graphs.SpikeScatterGraph
 
-    basic_protocol::Dict{String,Any}
 
-    function AppData()
+    function GuiData()
         o = new()
-
-        o.model = Model.ModelData()
 
         o.buffer = ""
 
@@ -51,19 +46,9 @@ mutable struct AppData
         
         o.counter = 0
         o.float_slide = 0.0
-
-        o.basic_protocol = JSON.parsefile("../data/com_protocol_basic.json")
-
+        
         o.spikes_graph = Graphs.SpikeScatterGraph()
         
         o
     end
-end
-
-function load_data!(data::AppData)
-    Model.load!(data.model, "../data/app.json")
-end
-
-function save_data(data::AppData)
-    Model.save(data.model, "../data/app.json")
 end

@@ -1,27 +1,49 @@
+using .Comm
 
-include("../../data/model/model.jl")
+app_data = Model.AppData()
+
+println("Connecting to server...")
+soc_client = Comm.SocClient()
+
+if soc_client ≠ nothing
+    println("Connected to server.")
+
+    Comm.listen(soc_client)
+else
+    println("#######################################################")
+    println("WARNING! Failed to connect to server.")
+    println("Start server from server folder before running client.")
+    println("Goodbye.")
+    println("#######################################################")
+end
+
 include("../gui/gui.jl")
 
 using .Gui
+using .Model
 
 if soc_client ≠ nothing
-
-    app_data = Gui.AppData()
+    gui_data = Gui.GuiData()
 
     # Load app json
-    Gui.load_data!(app_data)
+    Model.load_data!(app_data)
 
-    Gui.run(app_data, soc_client)
+    # run() doesn't return until the application is closed
+    Gui.run(gui_data, app_data, soc_client)
 
-    # cleanup
+    # ------------ Shutting down -------------------------------
     using Sockets
 
     println("Closing socket")
 
     Sockets.close(soc_client.socket)
 
-    Gui.save_data(app_data)
+    println("Saving model")
+    Model.save_data(app_data)
 
-    Gui.shutdown(app_data)
+    println("Closing Gui")
+    Gui.shutdown(gui_data)
+
+    println("Goodbye.")
 end
 

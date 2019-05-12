@@ -1,11 +1,11 @@
 {
   "DataOutputPath": "/media/RAMDisk/",
   "RangeEnd": 1000,
-  "Spans": 5,
+  "Spans": 1,
   "Simulation": "sim_1.json",
   "RangeStart": 0,
   "TimeScale": 100,
-  "Duration": 2000,
+  "Duration": 200,
   "DataPath": "../data/",
   "PoissonFiles": "poi_samples_span_"
 }

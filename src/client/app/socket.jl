@@ -28,7 +28,7 @@ end
 
 # The task dealing with the socket to server com.
 function listen(soc::SocClient)
-    println("Starting to listen to socket...")
+    println("Start listening to socket.")
 
     # **Socket Task**
     @async while true
@@ -49,8 +49,6 @@ function listen(soc::SocClient)
     println("Listening...")
 end
 
-include("handlers.jl")
-
 # Called from Gui loop
 function read_channel(soc::SocClient)
     if isready(soc.chan)
@@ -61,7 +59,11 @@ function read_channel(soc::SocClient)
         if json ≠ ""
             data = JSON.parse(json)
 
-            handle_msg(soc, data)
+            response = Main.handle_msg(data)
+
+            if response ≠ nothing
+                println(soc.socket, JSON.json(response))
+            end
         end
     else
         # The **Socket Task** above needs time to run so we yield.
@@ -78,20 +80,3 @@ function send(soc::SocClient, data::Dict{String,Any})
 end
 
 end # Module ------------------------
-
-using .Comm
-
-println("Connecting to server...")
-soc_client = Comm.SocClient()
-
-if soc_client ≠ nothing
-    println("Connected to server.")
-
-    Comm.listen(soc_client)
-else
-    println("#######################################################")
-    println("WARNING! Failed to connect to server.")
-    println("Start server from server folder before running client.")
-    println("#######################################################")
-end
-

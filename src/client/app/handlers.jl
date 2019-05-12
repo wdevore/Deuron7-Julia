@@ -1,28 +1,27 @@
 # ----------------------------------------------------
-# Message for the client.
+# Handlers for the client.
 # ----------------------------------------------------
-function handle_msg(soc::SocClient, data::Dict{String,Any})
+function handle_msg(data::Dict{String,Any})
     if data["From"] == "Client" && data["To"] == "Server"
-        handle_client_to_server(soc, data)
-        return
+        return handle_client_to_server(data)
     end
 
     if data["From"] == "Server" && data["To"] == "Client"
-        handle_server_to_client(soc, data)
-        return
+        return handle_server_to_client(data)
     end
 
     if data["From"] == "Simulation" && data["To"] == "Client"
-        handle_simulation_to_client(soc, data)
-        return
+        return handle_simulation_to_client(data)
     end
+
+    nothing
 end
 
-function handle_client_to_server(soc::SocClient, data::Dict{String,Any})
-    println(soc.socket, JSON.json(data))
+function handle_client_to_server(data::Dict{String,Any})
+    return data
 end
 
-function handle_server_to_client(soc::SocClient, data::Dict{String,Any})
+function handle_server_to_client(data::Dict{String,Any})
     if data["Type"] == "Cmd"
     elseif data["Type"] == "Response"
         if data["Data"] == "Shutdown in progress"
@@ -37,15 +36,17 @@ function handle_server_to_client(soc::SocClient, data::Dict{String,Any})
             data["Data"] = "Shutdown Accepted"
         
             # respond back to server
-            println(soc.socket, JSON.json(data))
+            return data
         elseif data["Data"] == "Simulation Complete"
             println("Server finished simulation")
         end
     end
+
+    nothing
 end
 
 # Handles message arriving from the simulation--running on the server.
-function handle_simulation_to_client(soc::SocClient, data::Dict{String,Any})
+function handle_simulation_to_client(data::Dict{String,Any})
     if data["Type"] == "Response"
         if data["Data"] == "Simulation Complete"
             println("Server finished simulation")
@@ -53,11 +54,13 @@ function handle_simulation_to_client(soc::SocClient, data::Dict{String,Any})
     elseif data["Type"] == "Status"
         if data["Data"] == "Span Completed"
             if data["Data1"] == "Poisson Samples"
-                println(data)
+                # Read span into Samples
+                span = data["Data3"]
+                Model.read_poi_samples(app_data.samples, app_data.model, span) 
             end
-    
-            # println(data["Data2"])
         end
     end
+
+    nothing
 end
 

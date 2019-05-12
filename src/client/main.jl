@@ -14,6 +14,9 @@
 # add JSON
 # add CSyntax
 # add CImGui
+include("../data/model/model.jl")
+
+include("../client/app/handlers.jl")
 
 include("app/socket.jl")
 

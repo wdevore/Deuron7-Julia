@@ -9,6 +9,7 @@ using CImGui.OpenGLBackend
 using CImGui.GLFWBackend.GLFW
 using CImGui.OpenGLBackend.ModernGL
 using Printf
+using JSON
 
 const DISPLAY_RATIO = 16.0 / 9.0
 const WIDTH = 1024 + 512
@@ -18,29 +19,26 @@ using ..Model
 
 include("init.jl")
 include("graphs/graphs.jl")
+include("gui_data.jl")
 
 using .Graphs
-
-include("app_data.jl")
-
 using ..Comm
-using JSON
 
 include("main_panel.jl")
 include("popup_window.jl")
 
-function run(data::AppData, sock::Comm.SocClient)
-    while !GLFW.WindowShouldClose(data.window)
+function run(gui_data::GuiData, app_data::Model.AppData, sock::Comm.SocClient)
+    while !GLFW.WindowShouldClose(gui_data.window)
         
         GLFW.PollEvents()
 
         begin_render()
 
-        draw_main_panel(data, sock)
+        draw_main_panel(gui_data, app_data, sock)
 
-        Graphs.draw(data.spikes_graph)
+        Graphs.draw(gui_data.spikes_graph, app_data.model, app_data.samples)
 
-        end_render(data)
+        end_render(gui_data)
     
         # App communications
         Comm.read_channel(sock)
@@ -54,7 +52,7 @@ function begin_render()
     CImGui.NewFrame()
 end
 
-function end_render(data::AppData)
+function end_render(data::GuiData)
         # rendering
     CImGui.Render()
     GLFW.MakeContextCurrent(data.window)
@@ -69,7 +67,7 @@ function end_render(data::AppData)
     GLFW.SwapBuffers(data.window)
 end
 
-function shutdown(data::AppData)
+function shutdown(data::GuiData)
     println("Shutting down...")
 
     ImGui_ImplOpenGL3_Shutdown()

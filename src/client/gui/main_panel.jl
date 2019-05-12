@@ -1,9 +1,7 @@
-# Contains: start, stop
-
 include("global_panel.jl")
 include("simulation_panel.jl")
 
-function draw_main_panel(app::AppData, sock::Comm.SocClient)
+function draw_main_panel(gui_data::GuiData, app_data::Model.AppData, sock::Comm.SocClient)
     CImGui.SetNextWindowPos((0, 0), CImGui.ImGuiCond_Once)
 
     # we use a Begin/End pair to create a named window.
@@ -23,25 +21,29 @@ function draw_main_panel(app::AppData, sock::Comm.SocClient)
     # Button bar ************************************************
     if CImGui.Button("Load Sim")
         # load simulation data
-        Model.load_sim!(app.model)
+        Model.load_sim!(app_data.model)
     end
     CImGui.SameLine()
 
     if CImGui.Button("Save Sim")
-        Model.save_sim(app.model)
+        Model.save_sim(app_data.model)
     end
 
     CImGui.SameLine()
     if CImGui.Button("Simulate")
         # Get protocol
-        data = app.basic_protocol
+        data = app_data.basic_protocol
 
         # Populate
         data["From"] = "Client"
         data["To"] = "Server"
         data["Type"] = "Cmd"
         data["Data"] = "Simulate"
-        data["Data1"] = Model.simulation(app.model)
+        data["Data1"] = Model.simulation(app_data.model)
+
+        if !Model.is_loaded(app_data.model)
+            Model.load_sim!(app_data.model)
+        end
 
         Comm.send(sock, data)
     end
@@ -49,7 +51,7 @@ function draw_main_panel(app::AppData, sock::Comm.SocClient)
 
     if CImGui.Button("Stop")
         # Get protocol
-        data = app.basic_protocol
+        data = app_data.basic_protocol
 
         # Populate
         data["From"] = "Client"
@@ -63,7 +65,7 @@ function draw_main_panel(app::AppData, sock::Comm.SocClient)
 
     if CImGui.Button("Shutdown Server")
         # Get protocol
-        data = app.basic_protocol
+        data = app_data.basic_protocol
 
         # Populate
         data["From"] = "Client"
@@ -75,10 +77,10 @@ function draw_main_panel(app::AppData, sock::Comm.SocClient)
     end
 
     # Global panel ************************************************
-    draw_global_panel(app, sock)
+    draw_global_panel(gui_data, app_data, sock)
 
     # Neuron panel ************************************************
-    draw_simulation_panel(app, sock)
+    draw_simulation_panel(gui_data, app_data, sock)
         
     CImGui.End()
 end

@@ -20,11 +20,15 @@ function add_stream!(streams::Streams, stream::AbstractBitStream)
 end
 
 const SEED_SCALER = 10000.0
+# For debugging we usually want a known sequence.
+const RESET_SEED = 13163
 
 function config_streams!(streams::Streams, synapses::Int64, firing_rate::Float64)
+    Random.seed!(RESET_SEED)
+
     streams.bit_streams =  Array{AbstractBitStream,1}()
 
-    # Create and collect a stream for each synapse
+    # Create a stream for each synapse
     for id in 1:synapses
         seed = Int64(round(rand(1)[1] * SEED_SCALER))
 

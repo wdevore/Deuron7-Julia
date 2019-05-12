@@ -71,7 +71,11 @@ function start(soc::SockServer)
         else
             # The **Socket Task** above needs time to run so we yield.
             yield()
+            # ~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-
+            # Just for simulating long process times.
+            # Remove when done debugging and testing.
             sleep(0.1)
+            # ~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-~_-
         end
     end
 
