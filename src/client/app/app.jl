@@ -28,6 +28,7 @@ if soc_client ≠ nothing
     # Load app json
     Model.load_data!(app_data)
 
+    println("--- Ready ---")
     # run() doesn't return until the application is closed
     Gui.run(gui_data, app_data, soc_client)
 

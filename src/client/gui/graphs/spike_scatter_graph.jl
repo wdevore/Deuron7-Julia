@@ -57,6 +57,8 @@ const GREEN = IM_COL32(0, 255, 0, 255)
 const LINE_THICKNESS = 1.0
 const WINDOW_WIDTH = 1000
 const WINDOW_HEIGHT = 300
+const SPIKE_ROW_OFFSET = 2 # Adds a gap between rows
+const SPIKE_HEIGHT = 10
 
 function draw_spikes(graph::SpikeScatterGraph, 
     draw_list::Ptr{CImGui.LibCImGui.ImDrawList},
@@ -74,12 +76,13 @@ function draw_spikes(graph::SpikeScatterGraph,
     synapses = Model.synapses(model)
     span_time = Model.span_time(model)
     duration = Float64(Model.span_time(model))
+    canvas_width = Float64(canvas_size.x)
 
-    span_id = 1
-    t = 1
     # We define y in window-space
-    w_y = 1.0 # Offset from border
-
+    w_y = 1.0 # Offset from border. 0 is underneath.
+    u_x = 0.0
+    w_x = 0.0
+    
     # Process each span in order
     for span in samples.spans
         # A span is a collection of rows (aka synapse lanes)
@@ -88,30 +91,25 @@ function draw_spikes(graph::SpikeScatterGraph,
             for t in 1:span_time
                 if span[id, t] == 1
                     u_x = map_sample_to_unit(Float64(t), 0.0, duration)
-                    w_x = map_unit_to_window(Float64(t), 0.0, duration)
+                    w_x = map_unit_to_window(u_x, 0.0, canvas_width)
                     (l_x, l_y) = map_window_to_local(w_x, w_y, canvas_pos)
 
                     CImGui.AddLine(draw_list,
                         ImVec2(l_x, l_y), 
-                        ImVec2(l_x, l_y + 10), 
+                        ImVec2(l_x, l_y + SPIKE_HEIGHT), 
                         YELLOW, LINE_THICKNESS)
-
-                                # print("1")
                 end
             end
-            if model.bug
-                println(w_y)
-            end
-            w_y += 2.0
+            w_y += SPIKE_HEIGHT + SPIKE_ROW_OFFSET
         end
 
-        span_id += 1
+        model.bug = false
     end
 
-    model.bug = false
     CImGui.PopClipRect(draw_list)
 
 end
+# if model.bug print("") end
 
 function draw_graph(graph::SpikeScatterGraph, model::Model.ModelData, samples::Model.Samples)
     draw_list = CImGui.GetWindowDrawList()
@@ -153,7 +151,7 @@ function draw(graph::SpikeScatterGraph, model::Model.ModelData, samples::Model.S
     CImGui.End()
 end
 
-# Map from sample-space to unit-space
+# Map from sample-space to unit-space where unit-space is 0->1
 function map_sample_to_unit(x::Float64, min::Float64, max::Float64)
     linear(min, max, x) 
 end
