@@ -24,9 +24,12 @@ using ...Model
 # The graph only shows up to 3 spans at a time.
 
 mutable struct SpikeScatterGraph <: AbstractGraph
+    show_vertical_t_bar_markers::Bool
+
     function SpikeScatterGraph()
         o = new()
         # TODO capture model data here to save time.
+        o.show_vertical_t_bar_markers = false
         o
     end
 end
@@ -45,6 +48,8 @@ function draw_header(graph::SpikeScatterGraph)
         #     Model.set_ap_max!(app.model, app.buffer)
         # end
 
+        @c CImGui.Checkbox("Vertical T Bars", &graph.show_vertical_t_bar_markers)
+
         CImGui.PopItemWidth()
     
         CImGui.TreePop()
@@ -54,6 +59,7 @@ end
 const GRAY = 64
 const YELLOW = IM_COL32(255, 255, 0, 255)
 const GREEN = IM_COL32(0, 255, 0, 255)
+const GREY = IM_COL32(128, 128, 128, 255)
 const LINE_THICKNESS = 1.0
 const WINDOW_WIDTH = 1000
 const WINDOW_HEIGHT = 300
@@ -81,80 +87,49 @@ function draw_spikes(graph::SpikeScatterGraph,
     # We define y in window-space
     u_x = 0.0
     w_x = 0.0
-    if model.bug println("duration: ", duration) end
+
+    u_vx = 0.0
+    w_vx = 0.0
 
     w_y = 1.0 # Offset from border. 0 is underneath.
+    # Vertical bar counter
+    vt = 1
+
     # A span is a collection of rows (aka synapse lanes)
     for id in 1:synapses
         # if model.bug println("id: ", id) end
+
         # Look for spikes to be drawn.
         for t in 1:duration
+            if graph.show_vertical_t_bar_markers
+                u_vx = map_sample_to_unit(Float64(vt), 0.0, duration_f)
+                w_vx = map_unit_to_window(u_vx, 0.0, canvas_width)
+                (l_vx, l_vy) = map_window_to_local(w_vx, 0.0, canvas_pos)
+                CImGui.AddLine(draw_list,
+                    ImVec2(l_vx, l_vy),
+                    ImVec2(l_vx, l_vy + canvas_size.y),
+                    GREY, LINE_THICKNESS)
+            end
+
             if samples.poi_samples[id, t] == 1
                 u_x = map_sample_to_unit(Float64(t), 0.0, duration_f)
                 w_x = map_unit_to_window(u_x, 0.0, canvas_width)
                 (l_x, l_y) = map_window_to_local(w_x, w_y, canvas_pos)
-                if model.bug print(l_x, ",") end
+                # if model.bug print(l_x, ",") end
 
                 CImGui.AddLine(draw_list,
                     ImVec2(l_x, l_y), 
                     ImVec2(l_x, l_y + SPIKE_HEIGHT), 
                     YELLOW, LINE_THICKNESS)
             end
+            vt += 1
+            # if model.bug println("vt: ", vt) end
         end
+
         w_y += SPIKE_HEIGHT + SPIKE_ROW_OFFSET
     end
 
     model.bug = false
-
-    CImGui.PopClipRect(draw_list)
-
-end
-function draw_spikes2(graph::SpikeScatterGraph, 
-    draw_list::Ptr{CImGui.LibCImGui.ImDrawList},
-    canvas_pos::CImGui.LibCImGui.ImVec2, canvas_size::CImGui.LibCImGui.ImVec2,
-    model::Model.ModelData, samples::Model.Samples)
-    CImGui.PushClipRect(draw_list, canvas_pos, 
-        ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), true) # clip lines within the canvas (if we resize it, etc.)
-
-    # We can't render anything until the model has been loaded.
-    if !Model.is_loaded(model)
-        return
-    end
-    
-    synapses = Model.synapses(model)
-    span_time = Model.span_time(model)
-    duration = Float64(Model.span_time(model))
-    canvas_width = Float64(canvas_size.x)
-
-    # We define y in window-space
-    u_x = 0.0
-    w_x = 0.0
-    te = span_time
-
-    # Process each span in order
-    for span in samples.spans
-        w_y = 1.0 # Offset from border. 0 is underneath.
-        # A span is a collection of rows (aka synapse lanes)
-        for id in 1:synapses
-            # Look for spikes to be drawn.
-            for t in 1:te
-                if span[id, t] == 1
-                    u_x = map_sample_to_unit(Float64(t), 0.0, duration)
-                    w_x = map_unit_to_window(u_x, 0.0, canvas_width)
-                    (l_x, l_y) = map_window_to_local(w_x, w_y, canvas_pos)
-
-                    CImGui.AddLine(draw_list,
-                        ImVec2(l_x, l_y), 
-                        ImVec2(l_x, l_y + SPIKE_HEIGHT), 
-                        YELLOW, LINE_THICKNESS)
-                end
-            end
-            w_y += SPIKE_HEIGHT + SPIKE_ROW_OFFSET
-        end
-
-        te += span_time
-        model.bug = false
-    end
 
     CImGui.PopClipRect(draw_list)
 
