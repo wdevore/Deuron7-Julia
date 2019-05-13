@@ -43,6 +43,7 @@ function draw_main_panel(gui_data::GuiData, app_data::Model.AppData, sock::Comm.
 
         if !Model.is_loaded(app_data.model)
             Model.load_sim!(app_data.model)
+            Model.config!(app_data)
         end
 
         Comm.send(sock, data)

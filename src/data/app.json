@@ -1,7 +1,7 @@
 {
   "DataOutputPath": "/media/RAMDisk/",
   "RangeEnd": 1000,
-  "Spans": 1,
+  "Spans": 5,
   "Simulation": "sim_1.json",
   "RangeStart": 0,
   "TimeScale": 100,

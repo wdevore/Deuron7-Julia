@@ -125,7 +125,8 @@ end
 # --------------------------------------------------------------
 function total_simulation_time(model::ModelData)
     duration = Model.duration(model)
-    duration
+    # span = Model.span_time(model)
+    duration #* span
 end
 
 # Span is = Duration

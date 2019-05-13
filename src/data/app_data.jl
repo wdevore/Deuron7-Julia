@@ -13,10 +13,18 @@ mutable struct AppData
 
         o.basic_protocol = JSON.parsefile("../data/com_protocol_basic.json")
         o.samples = Samples()
-        config_spans!(o.samples)
+
+        # config_spans!(o.samples)
 
         o
     end
+end
+
+function config!(data::AppData)
+    synapses = Model.synapses(data.model)
+    duration = Model.duration(data.model)
+
+    config_samples!(data.samples, synapses, duration)
 end
 
 function samples(data::AppData)

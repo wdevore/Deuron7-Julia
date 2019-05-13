@@ -67,8 +67,56 @@ function draw_spikes(graph::SpikeScatterGraph,
     CImGui.PushClipRect(draw_list, canvas_pos, 
         ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), true) # clip lines within the canvas (if we resize it, etc.)
 
-    # The spans collection grows as the simulation runs.
-    # We can't render anything until the has been loaded.
+    # We can't render anything until the model has been loaded.
+    if !Model.is_loaded(model)
+        return
+    end
+    
+    synapses = Model.synapses(model)
+    span_time = Model.span_time(model)
+    duration = Model.duration(model)
+    duration_f = Float64(Model.duration(model))
+    canvas_width = Float64(canvas_size.x)
+
+    # We define y in window-space
+    u_x = 0.0
+    w_x = 0.0
+    if model.bug println("duration: ", duration) end
+
+    w_y = 1.0 # Offset from border. 0 is underneath.
+    # A span is a collection of rows (aka synapse lanes)
+    for id in 1:synapses
+        # if model.bug println("id: ", id) end
+        # Look for spikes to be drawn.
+        for t in 1:duration
+            if samples.poi_samples[id, t] == 1
+                u_x = map_sample_to_unit(Float64(t), 0.0, duration_f)
+                w_x = map_unit_to_window(u_x, 0.0, canvas_width)
+                (l_x, l_y) = map_window_to_local(w_x, w_y, canvas_pos)
+                if model.bug print(l_x, ",") end
+
+                CImGui.AddLine(draw_list,
+                    ImVec2(l_x, l_y), 
+                    ImVec2(l_x, l_y + SPIKE_HEIGHT), 
+                    YELLOW, LINE_THICKNESS)
+            end
+        end
+        w_y += SPIKE_HEIGHT + SPIKE_ROW_OFFSET
+    end
+
+    model.bug = false
+
+    CImGui.PopClipRect(draw_list)
+
+end
+function draw_spikes2(graph::SpikeScatterGraph, 
+    draw_list::Ptr{CImGui.LibCImGui.ImDrawList},
+    canvas_pos::CImGui.LibCImGui.ImVec2, canvas_size::CImGui.LibCImGui.ImVec2,
+    model::Model.ModelData, samples::Model.Samples)
+    CImGui.PushClipRect(draw_list, canvas_pos, 
+        ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), true) # clip lines within the canvas (if we resize it, etc.)
+
+    # We can't render anything until the model has been loaded.
     if !Model.is_loaded(model)
         return
     end
@@ -79,16 +127,17 @@ function draw_spikes(graph::SpikeScatterGraph,
     canvas_width = Float64(canvas_size.x)
 
     # We define y in window-space
-    w_y = 1.0 # Offset from border. 0 is underneath.
     u_x = 0.0
     w_x = 0.0
-    
+    te = span_time
+
     # Process each span in order
     for span in samples.spans
+        w_y = 1.0 # Offset from border. 0 is underneath.
         # A span is a collection of rows (aka synapse lanes)
         for id in 1:synapses
-            # Sift the row for spikes to be drawn.
-            for t in 1:span_time
+            # Look for spikes to be drawn.
+            for t in 1:te
                 if span[id, t] == 1
                     u_x = map_sample_to_unit(Float64(t), 0.0, duration)
                     w_x = map_unit_to_window(u_x, 0.0, canvas_width)
@@ -103,6 +152,7 @@ function draw_spikes(graph::SpikeScatterGraph,
             w_y += SPIKE_HEIGHT + SPIKE_ROW_OFFSET
         end
 
+        te += span_time
         model.bug = false
     end
 
@@ -161,6 +211,7 @@ function map_unit_to_window(x::Float64, min::Float64, max::Float64)
     lerp(min, max, x) 
 end
 
+# Local = graph-space
 function map_window_to_local(x::Float64, y::Float64, offsets::CImGui.LibCImGui.ImVec2)
     (offsets.x + x, offsets.y + y)
 end

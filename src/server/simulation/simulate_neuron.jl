@@ -11,9 +11,9 @@ include("build_neuron.jl")
 # a span contains samples from all synapses.
 # Duration is specified in microseconds.
 #
-# |--- Duration ---|
+# |----------------------------- Duration ----------------------------|
 # |----- Span -----|----- Span -----|----- Span -----|----- Span -----|
-# |--------------------------Simulation time -------------------------|
+
 # Total simulation time = Sum of all spans or Spans * Duration
 
 function simulate(chan::Channel{String}, model::Model.ModelData)

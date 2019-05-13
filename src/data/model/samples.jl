@@ -1,18 +1,23 @@
-# All output from stimulation is kept here.
-# Samples writes chunks out to disk and then resets for next chunk.
+# Samples handles both server and client side IO
 using Printf
 
-# Type alias for Spans
+# Type alias for Spans.
+#  A span is structured as:
+#  1 |   ||     |   | |       ||     |
+#  2   |   |   ||     ||     |    |
+#  3  |    |    |         | |   |     |
+#  where "|" = 1s
+
 const SpanArray = Array{UInt8,2}
 
 mutable struct Samples
     # Holds a single span during simulation. It is written to disk
     # at the end of span simulation then reset for the next span.
+    # It is also used by the client to collect all spans
     poi_samples::SpanArray
 
-    # Spans collection. A span is loaded and collected upon each
-    # message from server simulation.
-    spans::Array{SpanArray,1}
+    # Start index of each span
+    t::Int64
 
     function Samples()
         o = new()
@@ -22,10 +27,7 @@ end
 
 function config_samples!(samples::Samples, synapses::Int64, length::Int64)
     samples.poi_samples = zeros(UInt8, synapses, length)
-end
-
-function config_spans!(samples::Samples)
-    samples.spans = Array{SpanArray,1}()
+    samples.t = 1
 end
 
 function write_samples!(samples::Samples, model::Model.ModelData, span::Int64)
@@ -72,6 +74,7 @@ function write_poi_samples(samples::Samples, model::Model.ModelData, span::Int64
     end
 end
 
+# Read all span and put spikes into poi_samples collection.
 function read_poi_samples(samples::Samples, model::Model.ModelData, span::Int64)
     # Where to access fresh samples
     path = Model.data_output_path(model)
@@ -80,10 +83,10 @@ function read_poi_samples(samples::Samples, model::Model.ModelData, span::Int64)
     file = path * Model.poisson_files(model) * string(span) * ".data"
 
     synapses = Model.synapses(model)
-    duration = Model.duration(model)
-    new_samples = zeros(UInt8, synapses, duration)
+    span_time = Model.span_time(model)
 
-    println("Loading new samples: ", file)
+    # println("Loading new samples: ", file)
+
     # Load samples
     idx = 1
     open(file, "r") do f
@@ -103,18 +106,17 @@ function read_poi_samples(samples::Samples, model::Model.ModelData, span::Int64)
             # Extract just spike data
             bits = SubString(syn_sample, idx_range[1] + 1, bits_end[1] - 1)
 
-            # load spikes into samples
-            t = 1
+            # load row of spikes into samples
+            t = samples.t
             for bit in bits
-                new_samples[idx, t] = parse(UInt8, bit)
-                # print(new_samples[idx, t])
+                samples.poi_samples[idx, t] = parse(UInt8, bit)
                 t += 1
             end
-            # println("")
             idx += 1
         end
     end
     
-    # Add to spans collection
-    push!(samples.spans, new_samples)
+    # Prepare for next span my moving "t" to the start of the next span
+    # position within the full duration of samples.
+    samples.t += span_time
 end
