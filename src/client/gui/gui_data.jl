@@ -12,9 +12,6 @@ mutable struct GuiData
 
     buffer::String
 
-    spikes_graph::Graphs.SpikeScatterGraph
-
-
     function GuiData()
         o = new()
 
@@ -46,8 +43,6 @@ mutable struct GuiData
         
         o.counter = 0
         o.float_slide = 0.0
-        
-        o.spikes_graph = Graphs.SpikeScatterGraph()
         
         o
     end

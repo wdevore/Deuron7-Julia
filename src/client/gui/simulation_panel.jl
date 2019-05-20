@@ -2,11 +2,11 @@ include("neuron_panel.jl")
 include("poisson_panel.jl")
 include("synapse_panel.jl")
 
-function draw_simulation_panel(gui_data::GuiData, data::Model.AppData, sock::Comm.SocClient)
+function draw_simulation_panel(gui_data::GuiData, app_data::Model.AppData, sock::Comm.SocClient)
     if CImGui.CollapsingHeader("Simulation")
         CImGui.PushItemWidth(80)
 
-        gui_data.buffer = string(Model.stimulus_scaler(data.model))
+        gui_data.buffer = Model.prep_field(Model.stimulus_scaler(app_data.model), 16)
         returned = CImGui.InputText("Stimulus Scaler", gui_data.buffer, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
             # println("enter: [", app.buffer, "]")
@@ -17,7 +17,7 @@ function draw_simulation_panel(gui_data::GuiData, data::Model.AppData, sock::Com
         end
         CImGui.SameLine(300)
 
-        gui_data.buffer = string(Model.hertz(data.model))
+        gui_data.buffer = Model.prep_field(Model.hertz(app_data.model), 16)
         returned = CImGui.InputText("Hertz (ISI)", gui_data.buffer, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
             Model.set_hertz!(data.model, gui_data.buffer)
@@ -26,10 +26,10 @@ function draw_simulation_panel(gui_data::GuiData, data::Model.AppData, sock::Com
         CImGui.PopItemWidth()
         
         # Poisson panel ************************************************
-        draw_poisson_panel(gui_data, data, sock)
+        draw_poisson_panel(gui_data, app_data, sock)
 
-        draw_neuron_panel(gui_data, data, sock)
+        draw_neuron_panel(gui_data, app_data, sock)
 
-        draw_synapse_panel(gui_data, data, sock)
+        draw_synapse_panel(gui_data, app_data, sock)
     end
 end

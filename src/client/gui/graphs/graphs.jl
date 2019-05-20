@@ -42,4 +42,6 @@ end
 
 include("spike_scatter_graph.jl")
 
+spikes_graph = Graphs.SpikeScatterGraph()
+
 end # Module ---------------------------------------

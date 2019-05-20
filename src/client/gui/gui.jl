@@ -18,8 +18,8 @@ const HEIGHT = UInt32(Float64(WIDTH) / DISPLAY_RATIO)
 using ..Model
 
 include("init.jl")
-include("graphs/graphs.jl")
 include("gui_data.jl")
+include("graphs/graphs.jl")
 
 using .Graphs
 using ..Comm
@@ -36,7 +36,7 @@ function run(gui_data::GuiData, app_data::Model.AppData, sock::Comm.SocClient)
 
         draw_main_panel(gui_data, app_data, sock)
 
-        Graphs.draw(gui_data.spikes_graph, app_data.model, app_data.samples)
+        Graphs.draw(Graphs.spikes_graph, gui_data::GuiData, app_data.model, app_data.samples)
 
         end_render(gui_data)
     

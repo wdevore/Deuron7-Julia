@@ -1,4 +1,5 @@
 using ...Model
+using ..Gui
 
 # This graph renders chains of Spikes
 # Each spike is a vertical lines about N pixels in height
@@ -25,6 +26,7 @@ using ...Model
 
 mutable struct SpikeScatterGraph <: AbstractGraph
     show_vertical_t_bar_markers::Bool
+    time_pos::Int64
 
     function SpikeScatterGraph()
         o = new()
@@ -34,23 +36,44 @@ mutable struct SpikeScatterGraph <: AbstractGraph
     end
 end
 
-function draw_header(graph::SpikeScatterGraph)
+function draw_header(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Model.ModelData)
     if CImGui.TreeNode("Controls##1")
-        CImGui.PushItemWidth(80)
-
-        # Row 1 *****************************************************
-        buff = ""
-        returned = CImGui.InputText("Window Start##1", buff, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
-        CImGui.SameLine(250)
-
-        returned = CImGui.InputText("Window End##1", buff, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
+        # CImGui.PushItemWidth(80)
+        # # Row 1 *****************************************************
+        # gui_data.buffer = Model.prep_field(Model.range_start(model), 10)
+        # returned = CImGui.InputText("Range Start##1", gui_data.buffer, 10, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         # if returned
-        #     Model.set_ap_max!(app.model, app.buffer)
+        #     Model.set_range_start!(model, gui_data.buffer)
         # end
+        # CImGui.SameLine(250)
 
-        @c CImGui.Checkbox("Vertical T Bars", &graph.show_vertical_t_bar_markers)
+        # gui_data.buffer = Model.prep_field(Model.range_end(model), 10)
+        # returned = CImGui.InputText("Range End##1", gui_data.buffer, 10, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
+        # if returned
+        #     Model.set_range_end!(model, gui_data.buffer)
+        # end
+        # CImGui.PopItemWidth()
 
-        CImGui.PopItemWidth()
+        duration = Cint(Model.duration(model))
+        begin_v = Cint(Model.range_start(model))
+        end_v = Cint(Model.range_end(model))
+        @c CImGui.DragIntRange2("Range##1", &begin_v, &end_v, 1, 1, duration, "Start: %d", "End: %d")
+        Model.set_range_start!(model, Int64(begin_v))
+        Model.set_range_end!(model, Int64(end_v))
+
+        pos = Cfloat(0.0) #Cfloat(Model.window_position(model))
+        @c CImGui.SliderFloat("Scroll velocity", &pos, -5.0, 5.0, "%.2f")
+        Model.set_scroll!(model, Float64(pos))
+
+        range_start = Model.range_start(model)
+        range_end = Model.range_end(model) # duration
+        range = range_end - range_start
+    
+        if range < 500 # Limit bars to less than 500 because Drawlist is limited to 2^16 items.
+            @c CImGui.Checkbox("Vertical Time Bars", &graph.show_vertical_t_bar_markers)
+        else
+            graph.show_vertical_t_bar_markers = false
+        end
     
         CImGui.TreePop()
     end
@@ -59,14 +82,15 @@ end
 const GRAY = 64
 const YELLOW = IM_COL32(255, 255, 0, 255)
 const GREEN = IM_COL32(0, 255, 0, 255)
-const GREY = IM_COL32(128, 128, 128, 255)
+const GREY = IM_COL32(100, 100, 100, 255)
+const LIGHT_GREY = IM_COL32(200, 200, 200, 255)
 const LINE_THICKNESS = 1.0
 const WINDOW_WIDTH = 1000
 const WINDOW_HEIGHT = 300
 const SPIKE_ROW_OFFSET = 2 # Adds a gap between rows
 const SPIKE_HEIGHT = 10
 
-function draw_spikes(graph::SpikeScatterGraph, 
+function draw_spikes(graph::SpikeScatterGraph, gui_data::Gui.GuiData,
     draw_list::Ptr{CImGui.LibCImGui.ImDrawList},
     canvas_pos::CImGui.LibCImGui.ImVec2, canvas_size::CImGui.LibCImGui.ImVec2,
     model::Model.ModelData, samples::Model.Samples)
@@ -78,41 +102,121 @@ function draw_spikes(graph::SpikeScatterGraph,
         return
     end
     
+    io = CImGui.GetIO()
+
     synapses = Model.synapses(model)
     span_time = Model.span_time(model)
     duration = Model.duration(model)
-    duration_f = Float64(Model.duration(model))
     canvas_width = Float64(canvas_size.x)
 
-    # We define y in window-space
+    # ------------------------------------------------------------------------
+    # Adjust range_start and range_end
+    # ------------------------------------------------------------------------
+    range_start = Model.range_start(model)
+    range_end = Model.range_end(model)
+    range = range_end - range_start
+    # println(range)
+    # Use window_position (0.0->1.0) to Lerp Range-start and Range-end.
+    scroll = Model.scroll(model)
+
+    # We only need to lerp the start because the end is simply start+range.
+    # range_s = Int64(round(lerp(1.0, Float64(range_start), Float64(win_pos))))
+    # range_e = Int64(round(range_s + range))
+    range_s = range_start
+    range_e = range_end
+    velocity = scroll_velocity(scroll)
+
+    if scroll < 0
+        range_start += velocity
+        # Left
+        if range_start > 0
+            range_end = range_start + range
+        else
+            range_start = 1
+            range_end = range_start + range
+        end
+    elseif scroll > 0
+        range_end += velocity
+        if range_end < duration
+            range_start = range_end - range
+        else
+            range_end = duration
+            range_start = range_end - range
+        end
+    end
+    range_start = Int64(round(range_start))
+    if range_start < 1
+        range_start = 1
+        range_end = range_start + range
+    end
+
+    range_end = Int64(round(range_end))
+
+    # Reflect values back to model
+    Model.set_range_start!(model, Int64(round(range_start)))
+    Model.set_range_end!(model, Int64(round(range_end)))
+    # ------------------------------------------------------------------------
+
+    # ------------------------------------------------------------------------
+    # Mouse vertical tracking and markers
+    # ------------------------------------------------------------------------
+    mouse_pos = CImGui.GetMousePos()
+    mpx = mouse_pos.x
+
+    # Mapped data coords
     u_x = 0.0
     w_x = 0.0
+    pl_vx = 0.0
+    # time_pos tracks the actual time regardless of scrolling so it always
+    # starts at the current range start value.
+    time_pos = range_start
 
-    u_vx = 0.0
-    w_vx = 0.0
+    # "t" is a counter over the range "size". time_pos is the actual
+    # time value capture for the tooltip
+    for t in 1:range
+        # We want the markers to track with time as well, so we map "t".
+        u_x = map_sample_to_unit(Float64(t), 0.0, Float64(range))
+        w_x = map_unit_to_window(u_x, 0.0, canvas_width)
+        (l_x, l_y) = map_window_to_local(w_x, 0.0, canvas_pos)
 
-    w_y = 1.0 # Offset from border. 0 is underneath.
-    # Vertical bar counter
-    vt = 1
-
-    # A span is a collection of rows (aka synapse lanes)
-    for id in 1:synapses
-        # if model.bug println("id: ", id) end
-
-        # Look for spikes to be drawn.
-        for t in 1:duration
+        if mpx > pl_vx && mpx < l_x
+            CImGui.AddLine(draw_list,
+                ImVec2(l_x, l_y),
+                ImVec2(l_x, l_y + canvas_size.y),
+                LIGHT_GREY, LINE_THICKNESS)
+            graph.time_pos = time_pos + 1
+        else
+            # Show vertical bars for visual references.
             if graph.show_vertical_t_bar_markers
-                u_vx = map_sample_to_unit(Float64(vt), 0.0, duration_f)
-                w_vx = map_unit_to_window(u_vx, 0.0, canvas_width)
-                (l_vx, l_vy) = map_window_to_local(w_vx, 0.0, canvas_pos)
                 CImGui.AddLine(draw_list,
-                    ImVec2(l_vx, l_vy),
-                    ImVec2(l_vx, l_vy + canvas_size.y),
+                    ImVec2(l_x, l_y),
+                    ImVec2(l_x, l_y + canvas_size.y),
                     GREY, LINE_THICKNESS)
             end
+        end
 
-            if samples.poi_samples[id, t] == 1
-                u_x = map_sample_to_unit(Float64(t), 0.0, duration_f)
+        pl_vx = l_x # Capture previous value for interval testing
+        time_pos += 1
+    end
+    # ------------------------------------------------------------------------
+
+    # ------------------------------------------------------------------------
+    # Render poisson spikes
+    # ------------------------------------------------------------------------
+    # Tracks a spike row.
+    w_y = 1.0 # Offset from border. 0 is underneath it.
+
+    # A span is a collection of rows (aka synapses)
+    for id in 1:synapses
+        # Narrow down to a single row by id
+        synaptic_samples = samples.poi_samples[id, :]
+        # if model.bug println("synaptic_samples: ", synaptic_samples) end
+
+        # Iterate samples with the defined range.
+        for t in range_start:range_end
+            if synaptic_samples[t] == 1 # A spike = 1
+                # The sample value needs to be mapped
+                u_x = map_sample_to_unit(Float64(t), Float64(range_s), Float64(range_e))
                 w_x = map_unit_to_window(u_x, 0.0, canvas_width)
                 (l_x, l_y) = map_window_to_local(w_x, w_y, canvas_pos)
                 # if model.bug print(l_x, ",") end
@@ -122,21 +226,26 @@ function draw_spikes(graph::SpikeScatterGraph,
                     ImVec2(l_x, l_y + SPIKE_HEIGHT), 
                     YELLOW, LINE_THICKNESS)
             end
-            vt += 1
+
             # if model.bug println("vt: ", vt) end
         end
 
+        # Update row/y value and offset by a few pixels
         w_y += SPIKE_HEIGHT + SPIKE_ROW_OFFSET
     end
 
-    model.bug = false
+    # model.bug = false
+
+    # ------------------------------------------------------------------------
+    # Render stimulus spikes
+    # ------------------------------------------------------------------------
 
     CImGui.PopClipRect(draw_list)
 
 end
 # if model.bug print("") end
 
-function draw_graph(graph::SpikeScatterGraph, model::Model.ModelData, samples::Model.Samples)
+function draw_graph(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Model.ModelData, samples::Model.Samples)
     draw_list = CImGui.GetWindowDrawList()
     canvas_pos = CImGui.GetCursorScreenPos()            # ImDrawList API uses screen coordinates!
     canvas_size = CImGui.GetContentRegionAvail()        # resize canvas to what's available
@@ -149,41 +258,53 @@ function draw_graph(graph::SpikeScatterGraph, model::Model.ModelData, samples::M
         cy = 50.0
     end
     canvas_size = ImVec2(cx, cy)
+    # A visible button scaled to the size of the canvas is used for hover checking
+    CImGui.InvisibleButton("canvas", canvas_size)
 
     CImGui.AddRectFilledMultiColor(draw_list, canvas_pos, 
         ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y),
         IM_COL32(GRAY, GRAY, GRAY, 255), IM_COL32(GRAY, GRAY, GRAY, 255),
         IM_COL32(GRAY, GRAY, GRAY, 255), IM_COL32(GRAY, GRAY, GRAY, 255))
-
+    if CImGui.IsItemHovered()
+        CImGui.BeginTooltip()
+        CImGui.Text(@sprintf("%d", graph.time_pos))
+        CImGui.EndTooltip()
+    end
+    
     CImGui.AddRect(draw_list, canvas_pos, 
         ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y),
         IM_COL32(128, 128, 128, 255))
 
-    draw_spikes(graph, draw_list, canvas_pos, canvas_size, model, samples)
+
+    draw_spikes(graph, gui_data, draw_list, canvas_pos, canvas_size, model, samples)
 end
 
-function draw(graph::SpikeScatterGraph, model::Model.ModelData, samples::Model.Samples)
+function draw(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Model.ModelData, samples::Model.Samples)
     CImGui.SetNextWindowSize((WINDOW_WIDTH, WINDOW_HEIGHT), CImGui.ImGuiCond_Always)
 
     CImGui.Begin("Spike Graph")
     
-    draw_header(graph)
+    draw_header(graph, gui_data, model)
 
     CImGui.Separator()
 
-    draw_graph(graph, model, samples)
+    draw_graph(graph, gui_data, model, samples)
 
     CImGui.End()
 end
 
+function scroll_velocity(scroll::Float64)
+    sign(scroll) * exp(sign(scroll) * scroll)
+end
+
 # Map from sample-space to unit-space where unit-space is 0->1
-function map_sample_to_unit(x::Float64, min::Float64, max::Float64)
-    linear(min, max, x) 
+function map_sample_to_unit(v::Float64, min::Float64, max::Float64)
+    linear(min, max, v) 
 end
 
 # Map from unit-space to window-space
-function map_unit_to_window(x::Float64, min::Float64, max::Float64)
-    lerp(min, max, x) 
+function map_unit_to_window(v::Float64, min::Float64, max::Float64)
+    lerp(min, max, v) 
 end
 
 # Local = graph-space
