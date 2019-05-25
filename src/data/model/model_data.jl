@@ -231,11 +231,34 @@ function set_data_output_path!(model::ModelData, v::String)
 end
 
 function poisson_files(model::ModelData)
-    model.data["PoissonFiles"]
+    model.data["OutputPoissonFiles"]
 end
 function set_poisson_files!(model::ModelData, v::String)
     v = strip_null(v)
-    model.data["PoissonFiles"] = v
+    model.data["OutputPoissonFiles"] = v
+end
+
+function output_stimulus_files(model::ModelData)
+    model.data["OutputStimulusFiles"]
+end
+function set_output_stimulus_files!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.data["OutputStimulusFiles"] = v
+end
+
+function source_stimulus(model::ModelData)
+    model.data["SourceStimulus"]
+end
+function set_source_stimulus!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.data["SourceStimulus"] = v
+end
+
+function frequency(model::ModelData)
+    model.data["Frequency"]
+end
+function set_frequency!(model::ModelData, v::Int64)
+    model.data["Frequency"] = v
 end
 
 

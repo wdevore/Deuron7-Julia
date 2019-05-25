@@ -30,6 +30,7 @@ mutable struct PoissonStream <: AbstractBitStream
         o.seed = seed
         o.isi = 0
         reset!(o)
+        step!(o)
         o
     end
 end
@@ -57,12 +58,6 @@ function step!(stream::PoissonStream)
         stream.base.output = 0
         stream.isi -= 1
     end
-end
-
-function is_complete(stream::PoissonStream)
-    # This type of stream never completes.
-    # It generates forever!
-    false
 end
 
 function output(stream::PoissonStream)

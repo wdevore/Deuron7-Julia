@@ -1,12 +1,15 @@
 {
-  "DataOutputPath": "/media/RAMDisk/",
-  "RangeEnd": 2000,
-  "Spans": 10,
   "Simulation": "sim_1.json",
-  "RangeStart": 1,
-  "TimeScale": 100,
-  "Duration": 2000,
   "DataPath": "../data/",
-  "PoissonFiles": "poi_samples_span_",
-  "Scroll": 0.0
+  "OutputPoissonFiles": "poi_samples_span_",
+  "Scroll": 0.0,
+  "DataOutputPath": "/media/RAMDisk/",
+  "RangeEnd": 148,
+  "SourceStimulus": "stim_2",
+  "Duration": 220,
+  "RangeStart": 1,
+  "Frequency": 50,
+  "Spans": 5,
+  "TimeScale": 100,
+  "OutputStimulusFiles": "stim_samples_span_"
 }

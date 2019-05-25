@@ -36,6 +36,8 @@ mutable struct SpikeScatterGraph <: AbstractGraph
     end
 end
 
+const MAX_VERTICAL_BARS = 250
+
 function draw_header(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Model.ModelData)
     if CImGui.TreeNode("Controls##1")
         # CImGui.PushItemWidth(80)
@@ -58,8 +60,12 @@ function draw_header(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Mod
         begin_v = Cint(Model.range_start(model))
         end_v = Cint(Model.range_end(model))
         @c CImGui.DragIntRange2("Range##1", &begin_v, &end_v, 1, 1, duration, "Start: %d", "End: %d")
-        Model.set_range_start!(model, Int64(begin_v))
-        Model.set_range_end!(model, Int64(end_v))
+        if Int64(begin_v) > 0 && Int64(end_v) <= duration
+            if Int64(begin_v) < Int64(end_v)
+                Model.set_range_start!(model, Int64(begin_v))
+                Model.set_range_end!(model, Int64(end_v))
+            end
+        end
 
         pos = Cfloat(0.0) #Cfloat(Model.window_position(model))
         @c CImGui.SliderFloat("Scroll velocity", &pos, -5.0, 5.0, "%.2f")
@@ -69,7 +75,7 @@ function draw_header(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Mod
         range_end = Model.range_end(model) # duration
         range = range_end - range_start
     
-        if range < 500 # Limit bars to less than 500 because Drawlist is limited to 2^16 items.
+        if range < MAX_VERTICAL_BARS # Limit bars to less than 500 because Drawlist is limited to 2^16 items.
             @c CImGui.Checkbox("Vertical Time Bars", &graph.show_vertical_t_bar_markers)
         else
             graph.show_vertical_t_bar_markers = false
@@ -82,6 +88,10 @@ end
 const GRAY = 64
 const YELLOW = IM_COL32(255, 255, 0, 255)
 const GREEN = IM_COL32(0, 255, 0, 255)
+const LIME_GREEN = IM_COL32(166, 255, 77, 255)
+const BLUE = IM_COL32(26, 209, 255, 255)
+const ORANGE = IM_COL32(255, 128, 0, 255)
+const LIGHT_BLUE = IM_COL32(121, 189, 232, 255)
 const GREY = IM_COL32(100, 100, 100, 255)
 const LIGHT_GREY = IM_COL32(200, 200, 200, 255)
 const LINE_THICKNESS = 1.0
@@ -115,15 +125,9 @@ function draw_spikes(graph::SpikeScatterGraph, gui_data::Gui.GuiData,
     range_start = Model.range_start(model)
     range_end = Model.range_end(model)
     range = range_end - range_start
-    # println(range)
     # Use window_position (0.0->1.0) to Lerp Range-start and Range-end.
     scroll = Model.scroll(model)
 
-    # We only need to lerp the start because the end is simply start+range.
-    # range_s = Int64(round(lerp(1.0, Float64(range_start), Float64(win_pos))))
-    # range_e = Int64(round(range_s + range))
-    range_s = range_start
-    range_e = range_end
     velocity = scroll_velocity(scroll)
 
     if scroll < 0
@@ -216,7 +220,7 @@ function draw_spikes(graph::SpikeScatterGraph, gui_data::Gui.GuiData,
         for t in range_start:range_end
             if synaptic_samples[t] == 1 # A spike = 1
                 # The sample value needs to be mapped
-                u_x = map_sample_to_unit(Float64(t), Float64(range_s), Float64(range_e))
+                u_x = map_sample_to_unit(Float64(t), Float64(range_start), Float64(range_end))
                 w_x = map_unit_to_window(u_x, 0.0, canvas_width)
                 (l_x, l_y) = map_window_to_local(w_x, w_y, canvas_pos)
                 # if model.bug print(l_x, ",") end
@@ -239,6 +243,35 @@ function draw_spikes(graph::SpikeScatterGraph, gui_data::Gui.GuiData,
     # ------------------------------------------------------------------------
     # Render stimulus spikes
     # ------------------------------------------------------------------------
+    w_y = 1.0 # Offset from border. 0 is underneath it.
+
+    # A span is a collection of rows (aka synapses)
+    for id in 1:synapses
+        # Narrow down to a single row by id
+        synaptic_samples = samples.stimulus_samples[id, :]
+        # if model.bug println("synaptic_samples: ", synaptic_samples) end
+
+        # Iterate samples with the defined range.
+        for t in range_start:range_end
+            if synaptic_samples[t] == 1 # A spike = 1
+                # The sample value needs to be mapped
+                u_x = map_sample_to_unit(Float64(t), Float64(range_start), Float64(range_end))
+                w_x = map_unit_to_window(u_x, 0.0, canvas_width)
+                (l_x, l_y) = map_window_to_local(w_x, w_y, canvas_pos)
+                # if model.bug print(l_x, ",") end
+
+                CImGui.AddLine(draw_list,
+                    ImVec2(l_x, l_y), 
+                    ImVec2(l_x, l_y + SPIKE_HEIGHT), 
+                    LIME_GREEN, LINE_THICKNESS)
+            end
+
+            # if model.bug println("vt: ", vt) end
+        end
+
+        # Update row/y value and offset by a few pixels
+        w_y += SPIKE_HEIGHT + SPIKE_ROW_OFFSET
+    end
 
     CImGui.PopClipRect(draw_list)
 

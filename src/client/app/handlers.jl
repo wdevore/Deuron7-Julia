@@ -53,11 +53,11 @@ function handle_simulation_to_client(data::Dict{String,Any})
         end
     elseif data["Type"] == "Status"
         if data["Data"] == "Span Completed"
-            if data["Data1"] == "Poisson Samples"
-                # Read span into Samples
-                span = data["Data3"]
-                Model.read_poi_samples(app_data.samples, app_data.model, span) 
-            end
+            # The simulation on the server completed a span
+            # Read span into Samples for both poisson and stimulus
+            span = data["Data2"]
+            Model.read_poi_samples(app_data.samples, app_data.model, span) 
+            Model.read_stimulus_samples(app_data.samples, app_data.model, span) 
         end
     end
 

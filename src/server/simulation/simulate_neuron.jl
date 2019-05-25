@@ -40,13 +40,15 @@ function simulate(chan::Channel{String}, model::Model.ModelData)
     println("~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-")
 
     firing_rate = Model.firing_rate(model)
+    
+    config_streams!(streams)
+    config_poi_streams!(streams, synapses, firing_rate)
+    config_stimulus_streams!(streams, model)
 
     # ~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--
     # Now the simulation starts.
     # ~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--
     spans = Model.spans(model)
-
-    config_streams!(streams, synapses, firing_rate)
 
     println("### --------- Starting Simulation -------- ###")
 
@@ -59,15 +61,15 @@ function simulate(chan::Channel{String}, model::Model.ModelData)
         # If the TimeScale = 100us then if t = 1 then 100us passed
         # and when t = 2 then 200us passed etc.
         for t in 1:span_time  # a single tick of the simulation.
-            # First we exercise all stimulus.
-            # This causes each stream to update and move its internal value to its output.
-            exercise!(streams)
-
-            # This is the main algorithm of the simulation.
+            # This is the core of the simulation.
             # integrate!(cell)
 
             # Collect all data for analysis by client.
             collect!(streams, samples, t)
+
+            # Exercise all stimulus.
+            # This causes each stream to update and move its internal value to its output.
+            exercise!(streams)
         end
 
         # We have finished a span, write it out to disk
@@ -94,9 +96,8 @@ function notify_client_span_completed(chan::Channel{String}, span::Int64)
     data["To"] = "Client"
     data["Type"] = "Status"
     data["Data"] = "Span Completed"
-    data["Data1"] = "Poisson Samples"
-    data["Data2"] = "poi_sample_c$span.data"
-    data["Data3"] = span
+    data["Data1"] = "poi_sample_c$span.data"
+    data["Data2"] = span
 
     put!(chan, JSON.json(data))
 end
