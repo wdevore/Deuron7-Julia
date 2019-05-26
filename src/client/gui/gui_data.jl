@@ -3,12 +3,12 @@ mutable struct GuiData
     window::GLFW.Window
     ctx::Ptr{Nothing}
     clear_color::Array{Cfloat,1}
-    show_demo_window::Bool
-    show_another_window::Bool
     counter::Cint
     float_slide::Cfloat
     display_w::Int32
     display_h::Int32
+
+    show_warning_dialog::Bool
 
     buffer::String
 
@@ -38,8 +38,7 @@ mutable struct GuiData
         ImGui_ImplOpenGL3_Init(glsl_version)
 
         o.clear_color = Cfloat[0.45, 0.55, 0.60, 1.00]
-        o.show_demo_window = true
-        o.show_another_window = false
+        o.show_warning_dialog = false
         
         o.counter = 0
         o.float_slide = 0.0

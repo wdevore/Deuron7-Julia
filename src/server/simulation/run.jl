@@ -2,6 +2,8 @@ using .Model
 
 basic_protocol = JSON.parsefile("../data/com_protocol_basic.json")
 
+const APP_JSON_FILE = "../data/app.json"
+
 # Launched from handle_client_to_server() when a message arrives
 # from client app.
 function run(chan::Channel{String}, simulation::String)
@@ -43,12 +45,12 @@ end
 function run_debug(chan::Channel{String}, simulation::String)
     model = Model.ModelData()    
 
-    Model.load!(model, "../data/app.json")
-    Model.load_sim!(model)
-
     println("#####################################")
     println("#### RUNNING DEBUG VARIANT")
     println("#####################################")
+
+    Model.load!(model, APP_JSON_FILE)
+    Model.load_sim!(model)
 
     simulate(chan, model)
 

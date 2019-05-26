@@ -86,7 +86,21 @@ function store_poi_sample!(samples::Samples, synapseId::Int64, t::Int64, value::
     samples.poi_samples[synapseId, t] = value
 end
 
-# Read all span and put spikes into poi_samples collection.
+function load_samples(samples::Samples, model::Model.ModelData)
+    spans = Model.spans(model)
+
+    synapses = Model.synapses(model)
+    duration = Model.duration(model)
+
+    config_samples!(samples, synapses, duration)
+
+    for span in 1:spans
+        read_poi_samples(samples, model, span)
+        read_stimulus_samples(samples, model, span)
+    end
+end
+
+# Read span and put spikes into poi_samples collection.
 function read_poi_samples(samples::Samples, model::Model.ModelData, span::Int64)
     # Where to access fresh samples
     path = Model.data_output_path(model)

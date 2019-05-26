@@ -107,7 +107,8 @@ function draw_spikes(graph::SpikeScatterGraph, gui_data::Gui.GuiData,
     CImGui.PushClipRect(draw_list, canvas_pos, 
         ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), true) # clip lines within the canvas (if we resize it, etc.)
 
-    # We can't render anything until the model has been loaded.
+    # We can't render anything until the model has been loaded
+    # ALONG with the samples.
     if !Model.is_loaded(model)
         return
     end

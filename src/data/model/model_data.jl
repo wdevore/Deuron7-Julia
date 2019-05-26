@@ -21,12 +21,17 @@ mutable struct ModelData
 
     bug::Bool
 
+    sim_changed::Bool
+    app_changed::Bool
+
     function ModelData()
         o = new()
 
         o.threshold = "\0"^16
         o.loaded = false
         o.bug = true
+        o.sim_changed = true
+        o.app_changed = true
         o
     end
 end
@@ -66,6 +71,18 @@ end
 function is_loaded(model::ModelData)
     model.loaded = model.app_data_loaded && model.sim_data_loaded
     model.loaded
+end
+
+function is_app_changed(model::ModelData)
+    model.sim_changed
+end
+
+function is_sim_changed(model::ModelData)
+    model.app_changed
+end
+
+function is_changed(model::ModelData)
+    is_app_changed(model) || is_sim_changed(model)
 end
 
 function load_sim!(model::ModelData)
@@ -114,7 +131,7 @@ function save_sim(model::ModelData)
     sim = simulation(model)
     path = data_path(model)
     file = path * sim
-
+    println("Saving: ", file)
     open(file, "w") do f
         JSON.print(f, model.sim, 2)
     end
@@ -163,6 +180,7 @@ function simulation(model::ModelData)
 end
 function set_simulation!(model::ModelData, v::String)
     model.data["Simulation"] = v
+    model.app_changed = true
 end
 
 # Duration is how long a Span is in units of time.
@@ -171,7 +189,9 @@ function duration(model::ModelData)
     model.data["Duration"]
 end
 function set_duration!(model::ModelData, v::String)
+    v = strip_null(v)
     model.data["Duration"] = parse(Int64, v)
+    model.app_changed = true
 end
 
 function range_start(model::ModelData)
@@ -180,9 +200,11 @@ end
 function set_range_start!(model::ModelData, v::String)
     v = strip_null(v)
     model.data["RangeStart"] = parse(Int64, v)
+    model.app_changed = true
 end
 function set_range_start!(model::ModelData, v::Int64)
     model.data["RangeStart"] = v
+    model.app_changed = true
 end
 
 function range_end(model::ModelData)
@@ -191,9 +213,11 @@ end
 function set_range_end!(model::ModelData, v::String)
     v = strip_null(v)
     model.data["RangeEnd"] = parse(Int64, v)
+    model.app_changed = true
 end
 function set_range_end!(model::ModelData, v::Int64)
     model.data["RangeEnd"] = v
+    model.app_changed = true
 end
 
 function scroll(model::ModelData)
@@ -201,6 +225,7 @@ function scroll(model::ModelData)
 end
 function set_scroll!(model::ModelData, v::Float64)
     model.data["Scroll"] = v
+    model.app_changed = true
 end
 
 function spans(model::ModelData)
@@ -209,6 +234,7 @@ end
 function set_spans!(model::ModelData, v::String)
     v = strip_null(v)
     model.data["Spans"] = parse(Int64, v)
+    model.app_changed = true
 end
 
 function time_scale(model::ModelData)
@@ -217,9 +243,11 @@ end
 function set_time_scale!(model::ModelData, v::String)
     v = strip_null(v)
     set_time_scale!(model, parse(Int64, v))
+    model.app_changed = true
 end
 function set_time_scale!(model::ModelData, v::Int64)
     model.data["TimeScale"] = v
+    model.app_changed = true
 end
 
 function data_output_path(model::ModelData)
@@ -228,6 +256,7 @@ end
 function set_data_output_path!(model::ModelData, v::String)
     v = strip_null(v)
     model.data["DataOutputPath"] = v
+    model.app_changed = true
 end
 
 function poisson_files(model::ModelData)
@@ -236,6 +265,7 @@ end
 function set_poisson_files!(model::ModelData, v::String)
     v = strip_null(v)
     model.data["OutputPoissonFiles"] = v
+    model.app_changed = true
 end
 
 function output_stimulus_files(model::ModelData)
@@ -244,6 +274,7 @@ end
 function set_output_stimulus_files!(model::ModelData, v::String)
     v = strip_null(v)
     model.data["OutputStimulusFiles"] = v
+    model.app_changed = true
 end
 
 function source_stimulus(model::ModelData)
@@ -252,6 +283,7 @@ end
 function set_source_stimulus!(model::ModelData, v::String)
     v = strip_null(v)
     model.data["SourceStimulus"] = v
+    model.app_changed = true
 end
 
 function frequency(model::ModelData)
@@ -259,6 +291,7 @@ function frequency(model::ModelData)
 end
 function set_frequency!(model::ModelData, v::Int64)
     model.data["Frequency"] = v
+    model.app_changed = true
 end
 
 
@@ -277,9 +310,11 @@ end
 function set_firing_rate!(model::ModelData, v::String)
     v = strip_null(v)
     set_firing_rate!(model, parse(Float64, v))
+    model.sim_changed = true
 end
 function set_firing_rate!(model::ModelData, v::Float64)
     model.sim["Firing_Rate"] = v
+    model.sim_changed = true
 end
 
 function synapses(model::ModelData)
@@ -288,6 +323,7 @@ end
 function synapses!(model::ModelData, v::String)
     v = strip_null(v)
     model.sim["Synapses"] = parse(Int64, v)
+    model.sim_changed = true
 end
 
 # If Hertz = 0 then stimulus is distributed as poisson.
@@ -301,6 +337,7 @@ end
 function set_hertz!(model::ModelData, v::String)
     v = strip_null(v)
     model.sim["Hertz"] = parse(Int64, v)
+    model.sim_changed = true
 end
 
 # Shrinks or expands ISI for stimulus
@@ -310,6 +347,7 @@ end
 function set_stimulus_scaler!(model::ModelData, v::String)
     v = strip_null(v)
     model.sim["StimulusScaler"] = parse(Int64, v)
+    model.sim_changed = true
 end
 
 function poisson_pattern_min(model::ModelData)
@@ -318,6 +356,7 @@ end
 function set_poisson_pattern_min!(model::ModelData, v::String)
     v = strip_null(v)
     model.sim["Poisson_Pattern_min"] = parse(Int64, v)
+    model.sim_changed = true
 end
 
 function poisson_pattern_max(model::ModelData)
@@ -326,6 +365,7 @@ end
 function set_poisson_pattern_max!(model::ModelData, v::String)
     v = strip_null(v)
     model.sim["Poisson_Pattern_max"] = parse(Int64, v)
+    model.sim_changed = true
 end
 
 function poisson_pattern_spread(model::ModelData)
@@ -334,6 +374,7 @@ end
 function set_poisson_pattern_spread!(model::ModelData, v::String)
     v = strip_null(v)
     model.sim["Poisson_Pattern_spread"] = parse(Int64, v)
+    model.sim_changed = true
 end
 
 # --------------------------------------------------------------
@@ -347,6 +388,7 @@ function set_active_synapse!(model::ModelData, v::String)
     model.sim["ActiveSynapse"] = parse(Int64, v)
     model.active_synapse = model.sim["ActiveSynapse"]
     model.synapse = model.synapses[model.active_synapse]
+    model.sim_changed = true
 end
 
 function refractory_period(model::ModelData)
@@ -356,6 +398,7 @@ end
 function set_refractory_period!(model::ModelData, v::String)
     v = strip_null(v)
     model.neuron["RefractoryPeriod"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function ap_max(model::ModelData)
@@ -364,6 +407,7 @@ end
 function set_ap_max!(model::ModelData, v::String)
     v = strip_null(v)
     model.neuron["APMax"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function threshold(model::ModelData)
@@ -372,6 +416,7 @@ end
 function set_threshold!(model::ModelData, v::String)
     v = strip_null(v)
     model.neuron["Threshold"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function fast_surge(model::ModelData)
@@ -380,6 +425,7 @@ end
 function set_fast_surge!(model::ModelData, v::String)
     v = strip_null(v)
     model.neuron["nFastSurge"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function slow_surge(model::ModelData)
@@ -388,6 +434,7 @@ end
 function set_slow_surge!(model::ModelData, v::String)
     v = strip_null(v)
     model.neuron["nSlowSurge"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function slow_surge(model::ModelData)
@@ -396,6 +443,7 @@ end
 function set_slow_surge!(model::ModelData, v::String)
     v = strip_null(v)
     model.neuron["nSlowSurge"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function tao(model::ModelData)
@@ -404,6 +452,7 @@ end
 function set_tao!(model::ModelData, v::String)
     v = strip_null(v)
     model.neuron["ntao"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function tao_j(model::ModelData)
@@ -412,6 +461,7 @@ end
 function set_tao_j!(model::ModelData, v::String)
     v = strip_null(v)
     model.neuron["ntaoJ"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function tao_s(model::ModelData)
@@ -420,6 +470,7 @@ end
 function set_tao_s!(model::ModelData, v::String)
     v = strip_null(v)
     model.neuron["ntaoS"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function weight_max(model::ModelData)
@@ -428,6 +479,7 @@ end
 function set_weight_max!(model::ModelData, v::String)
     v = strip_null(v)
     model.neuron["wMax"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function weight_min(model::ModelData)
@@ -436,6 +488,7 @@ end
 function set_weight_min!(model::ModelData, v::String)
     v = strip_null(v)
     model.neuron["wMin"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 # --------------------------------------------------------------
@@ -447,6 +500,7 @@ end
 function set_id!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["id"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function alpha(model::ModelData)
@@ -455,6 +509,7 @@ end
 function set_alpha!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["alpha"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function ama(model::ModelData)
@@ -463,6 +518,7 @@ end
 function set_ama!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["ama"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function amb(model::ModelData)
@@ -471,6 +527,7 @@ end
 function set_amb!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["amb"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function lambda(model::ModelData)
@@ -479,6 +536,7 @@ end
 function set_lambda!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["lambda"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function learning_rate_fast(model::ModelData)
@@ -487,6 +545,7 @@ end
 function set_learning_rate_fast!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["learningRateFast"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function learning_rate_slow(model::ModelData)
@@ -495,6 +554,7 @@ end
 function set_learning_rate_slow!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["learningRateSlow"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function mu(model::ModelData)
@@ -503,6 +563,7 @@ end
 function set_mu!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["mu"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function taoI(model::ModelData)
@@ -511,6 +572,7 @@ end
 function set_taoI!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["taoI"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function taoN(model::ModelData)
@@ -519,6 +581,7 @@ end
 function set_taoN!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["taoN"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function taoP(model::ModelData)
@@ -527,6 +590,7 @@ end
 function set_taoP!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["taoP"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 # Distance from soma
@@ -536,6 +600,7 @@ end
 function set_distance!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["distance"] = parse(Float64, v)
+    model.sim_changed = true
 end
 
 function weight(model::ModelData)
@@ -544,4 +609,5 @@ end
 function set_weight!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["w"] = parse(Float64, v)
+    model.sim_changed = true
 end
