@@ -1,4 +1,4 @@
-# An axon takes an input from the soma and routes it to a destination.
+# An axon takes an input from the soma and routes it to a destination without delay.
 # a) Just poisson input
 # b) Poisson and Stimulus
 

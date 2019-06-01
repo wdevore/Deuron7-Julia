@@ -31,3 +31,8 @@ abstract type AbstractAxon end
 
 
 abstract type AbstractDelay end
+
+abstract type AbstractSoma end
+abstract type AbstractDendrite end
+abstract type AbstractCompartment end
+abstract type AbstractSynapse end

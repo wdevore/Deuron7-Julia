@@ -4,6 +4,10 @@ basic_protocol = JSON.parsefile("../data/com_protocol_basic.json")
 
 const APP_JSON_FILE = "../data/app.json"
 
+# -_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_
+# NOTE: These run functions are called from handlers.jl
+# -_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_
+
 # Launched from handle_client_to_server() when a message arrives
 # from client app.
 function run(chan::Channel{String}, simulation::String)
@@ -41,7 +45,7 @@ function run(chan::Channel{String}, simulation::String)
 end
 
 # WARNING! Use only for development. The simulation will not run async
-# hence the client won't be notified during simulation.
+# hence the client won't be notified of span completions during simulation.
 function run_debug(chan::Channel{String}, simulation::String)
     model = Model.ModelData()    
 

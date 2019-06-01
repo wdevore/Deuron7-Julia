@@ -61,5 +61,5 @@ function step!(stream::PoissonStream)
 end
 
 function output(stream::PoissonStream)
-    stream.base.output
+    stream.base.output & 0x01
 end

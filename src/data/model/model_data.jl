@@ -8,6 +8,9 @@ mutable struct ModelData
     sim::Dict{AbstractString,Any}
 
     neuron::Dict{String,Any}
+    dendrite::Dict{String,Any}
+    compartment::Dict{String,Any}
+
     synapses::Array{Any,1}
     synapse::Dict{String,Any}
     active_synapse::Int64
@@ -114,14 +117,29 @@ function load_sim!(model::ModelData)
     # println(data)
 
     model.sim = data;
+    if model.sim == nothing
+        println("##### WARNING #####")
+        println("sim json node not found")
+    end
 
     model.neuron = model.sim["Neuron"]
     model.active_synapse = model.sim["ActiveSynapse"]
 
+    # TODO change json to be array of dendrites
     dendrites = model.neuron["Dendrites"]
-    compartments = dendrites["Compartments"]
-    compartment = compartments[1]
-    model.synapses = compartment["Synapses"]
+    if dendrites == nothing
+        println("##### WARNING #####")
+        println("dendrites json node not found")
+    end
+    model.dendrite = dendrites
+
+    compartments = model.dendrite["Compartments"]
+    if compartments == nothing
+        println("##### WARNING #####")
+        println("compartments json node not found")
+    end
+    model.compartment = compartments[1]
+    model.synapses = model.compartment["Synapses"]
     model.synapse = model.synapses[model.active_synapse]
 
     model.sim_data_loaded = true;
@@ -171,6 +189,10 @@ end
 # --------------------------------------------------------------
 # Application Setter/Getters
 # --------------------------------------------------------------
+function app_root_path(model::ModelData)
+    model.data["AppRootPath"]
+end
+
 function data_path(model::ModelData)
     model.data["DataPath"]
 end
@@ -392,8 +414,7 @@ function set_active_synapse!(model::ModelData, v::String)
 end
 
 function refractory_period(model::ModelData)
-    neuron = model.sim["Neuron"]
-    neuron["RefractoryPeriod"]
+    model.neuron["RefractoryPeriod"]
 end
 function set_refractory_period!(model::ModelData, v::String)
     v = strip_null(v)
@@ -473,21 +494,87 @@ function set_tao_s!(model::ModelData, v::String)
     model.sim_changed = true
 end
 
-function weight_max(model::ModelData)
+function w_max(model::ModelData)
     model.neuron["wMax"]
 end
-function set_weight_max!(model::ModelData, v::String)
+function set_w_max!(model::ModelData, v::String)
     v = strip_null(v)
     model.neuron["wMax"] = parse(Float64, v)
     model.sim_changed = true
 end
+function set_w_max!(model::ModelData, v::Float64)
+    model.neuron["wMax"] = v
+    model.sim_changed = true
+end
 
-function weight_min(model::ModelData)
+function w_min(model::ModelData)
     model.neuron["wMin"]
 end
-function set_weight_min!(model::ModelData, v::String)
+function set_w_min!(model::ModelData, v::String)
     v = strip_null(v)
     model.neuron["wMin"] = parse(Float64, v)
+    model.sim_changed = true
+end
+function set_w_min!(model::ModelData, v::Float64)
+    model.neuron["wMin"] = v
+    model.sim_changed = true
+end
+
+# --------------------------------------------------------------
+# Dendrite Setter/Getters
+# --------------------------------------------------------------
+function tao_eff(model::ModelData)
+    model.dendrite["taoEff"]
+end
+function set_tao_eff!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.dendrite["taoEff"] = parse(Float64, v)
+    model.sim_changed = true
+end
+function set_tao_eff!(model::ModelData, v::Float64)
+    model.dendrite["taoEff"] = v
+    model.sim_changed = true
+end
+
+function dendrite_length(model::ModelData)
+    model.dendrite["length"]
+end
+function set_dendrite_length!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.dendrite["length"] = parse(Float64, v)
+    model.sim_changed = true
+end
+function set_dendrite_length!(model::ModelData, v::Float64)
+    model.dendrite["length"] = v
+    model.sim_changed = true
+end
+
+# --------------------------------------------------------------
+# Compartments Setter/Getters
+# --------------------------------------------------------------
+function weight_max(model::ModelData)
+    model.compartment["WeightMax"]
+end
+function set_weight_max!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.compartment["WeightMax"] = parse(Float64, v)
+    model.sim_changed = true
+end
+function set_weight_max!(model::ModelData, v::Float64)
+    model.compartment["WeightMax"] = v
+    model.sim_changed = true
+end
+
+function weight_divisor(model::ModelData)
+    model.compartment["WeightDivisor"]
+end
+function set_weight_divisor!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.compartment["WeightDivisor"] = parse(Float64, v)
+    model.sim_changed = true
+end
+function set_weight_divisor!(model::ModelData, v::Float64)
+    model.compartment["WeightDivisor"] = v
     model.sim_changed = true
 end
 
@@ -609,5 +696,9 @@ end
 function set_weight!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["w"] = parse(Float64, v)
+    model.sim_changed = true
+end
+function set_weight!(model::ModelData, v::Float64)
+    model.synapse["w"] = v
     model.sim_changed = true
 end

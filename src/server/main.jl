@@ -12,5 +12,13 @@ using .Server
 
 soc_server = Server.SockServer()
 
+@async while true
+    input = readavailable(stdin)
+    if input[1] == 0x71 # "q" == quit
+        exit(1)
+    end
+end
+
+
 Server.start(soc_server)
 

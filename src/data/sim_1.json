@@ -164,7 +164,9 @@
               "ama": 1.2
             }
           ],
-          "id": 0
+          "id": 0,
+          "WeightMax": 10.0,
+          "WeightDivisor": 2.0
         }
       ]
     },

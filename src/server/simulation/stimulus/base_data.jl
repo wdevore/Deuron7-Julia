@@ -4,6 +4,6 @@ mutable struct BaseData{T <: Unsigned}
     output::T
 
     function BaseData{T}() where {T <: Unsigned}
-        new(0, 0)
+        new(0, 0, 0)
     end
 end

@@ -139,5 +139,46 @@ function output(stream::RegularPatternStream, synapse::Int64)
     else
         stream.base.output = 0
     end
-    stream.base.output
+    
+    stream.base.output & 0x01
+end
+
+function load!(stream::RegularPatternStream, pattern_file::String, frequency::Int64)
+    # Example Format:
+    # ....|.
+    # ...|..
+    # |..|..
+    # .|....
+    # ....|.
+    # ....|.
+    # |.....
+    # .....|
+    # ..|...
+    # .|....
+
+    open(pattern_file, "r") do f
+        patterns = readlines(f)
+        
+        # Each line is the same length so [1] is valid
+        duration = length(patterns[1])
+
+        # How many synapses or "lanes/channels"
+        channels = length(patterns)
+
+        stimulus = zeros(UInt8, channels, duration)
+
+        row = 1
+        for pat_samples in patterns
+            col = 1
+            for c in pat_samples
+                if c == '|'
+                    stimulus[row, col] = UInt8(1)
+                end
+                col += 1
+            end
+            row += 1
+        end
+
+        config_stream!(stream, stimulus, frequency)
+    end
 end

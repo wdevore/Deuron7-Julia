@@ -3,10 +3,10 @@ module Simulation
 using Sockets
 using JSON
 
-# include("../app/data.jl")
+include("abstracts.jl")
 include("stimulus/stimulus.jl")
 include("delay.jl")
 include("simulate_neuron.jl")
 include("run.jl")
 
-end
+end # Simulation --------------------------------------------------

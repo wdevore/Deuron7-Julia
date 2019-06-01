@@ -6,7 +6,8 @@ basic_protocol = JSON.parsefile("../data/com_protocol_basic.json")
 
 include("build_neuron.jl")
 
-# A simulation is broken up into Spans.
+# A simulation is broken up into Spans. This allows notifications to
+# be sent to the client.
 # Each Span (aka span_time) equals: Duration where
 # a span contains samples from all synapses.
 # Duration is specified in microseconds.
@@ -16,6 +17,9 @@ include("build_neuron.jl")
 
 # Total simulation time = Sum of all spans or Spans * Duration
 
+# -_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_
+# NOTE: simulate() is called from run.jl
+# -_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_
 function simulate(chan::Channel{String}, model::Model.ModelData)
     println("Configuring simulation...")
     # The samples collected during the simulation.
@@ -25,6 +29,7 @@ function simulate(chan::Channel{String}, model::Model.ModelData)
     # Build neuron for simulation.
     println("Building neuron model.")
     cell = build_neuron(model)
+    initialize!(cell)
 
     println("~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-")
     duration = Model.total_simulation_time(model)
@@ -39,10 +44,17 @@ function simulate(chan::Channel{String}, model::Model.ModelData)
     println("Synapses: ", synapses)
     println("~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-")
 
-    firing_rate = Model.firing_rate(model)
     
+    # ~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--
+    # Setup and configure the collections that hold sampling data
+    # captured during simulation.
+    # ~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--
     config_streams!(streams)
+
+    # Poi streams have a firing rate property
+    firing_rate = Model.firing_rate(model)
     config_poi_streams!(streams, synapses, firing_rate)
+
     config_stimulus_streams!(streams, model)
 
     # ~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--
@@ -58,8 +70,8 @@ function simulate(chan::Channel{String}, model::Model.ModelData)
         config_samples!(samples, synapses, span_time)
     
         # "t" is a single time step representing a single TimeScale.
-        # If the TimeScale = 100us then if t = 1 then 100us passed
-        # and when t = 2 then 200us passed etc.
+        # If the TimeScale = 100us then if t = 2 then 100us passed
+        # and when t = 3 then 200us passed etc.
         for t in 1:span_time  # a single tick of the simulation.
             # This is the core of the simulation.
             # integrate!(cell)

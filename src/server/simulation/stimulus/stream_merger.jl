@@ -1,33 +1,36 @@
 mutable struct StreamMerger <: AbstractBitStream
     base::BaseData{UInt8}
+
     # Inputs
-    inputs::Array{AbstractBitStream,1}
+    streams::Array{AbstractBitStream,1}
 
     function StreamMerger()
         o = new()
 
-        o.inputs = Array{AbstractBitStream,1}()
-
+        o.streams = Array{AbstractBitStream,1}()
+        o.base = BaseData{UInt8}()
         o
     end
 end
 
-function add_stream!(merge::StreamMerger, stream::AbstractBitStream)
-    push!(merge.inputs, stream)
+function add_stream!(merger::StreamMerger, stream::AbstractBitStream)
+    push!(merger.streams, stream)
 end
 
-function output(merge::StreamMerger)
-    merge.base.output
+function output(merger::StreamMerger)
+    merger.base.output
 end
 
-function step!(merge::StreamMerger)
+function step!(merger::StreamMerger)
     # Combine each stream's output into a single value and
     # send directly to output.
-    merge.base.output = 0
+    merger.base.output = 0
 
-    for stream in merge.streams
+    for stream in merger.streams
         # Make sure stream output is ready
         step!(stream)
-        merge.base.output |= output(stream)
+
+        # Merge streams.
+        merger.base.output = merger.base.output | output(stream)
     end
 end
