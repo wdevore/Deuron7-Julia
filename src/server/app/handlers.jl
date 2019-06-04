@@ -50,8 +50,23 @@ function handle_client_to_server(soc::SockServer, data::Dict{String,Any})
                 println("Client-to-Server must have shutdown. Can't send.")
             end
         elseif data["Data"] == "Simulate"
+            # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+            # --------------- Main entry into simulation -------------
+            # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
             # Simulation.run(soc.chan, data["Data1"])
+
+            # This version is used during development.
             Simulation.run_debug(soc.chan, data["Data1"])
+        elseif data["Data"] == "Re-Simulate"
+            # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+            # --------------- Secondary entry into simulation -------------
+            # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+            # Simulation.re_run(soc.chan, data["Data1"])
+
+            # This version is used during development.
+            Simulation.re_run_debug(soc.chan, data["Data1"])
         else
             println("Unknown Cmd: ", data)
         end

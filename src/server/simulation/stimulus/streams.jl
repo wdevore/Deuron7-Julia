@@ -43,8 +43,8 @@ const SEED_SCALER = 10000.0
 const RESET_SEED = 13163
 
 function config_streams!(streams::Streams)
-    streams.bit_streams =  Array{AbstractBitStream,1}()
-    streams.stim_streams =  Array{AbstractBitStream,1}()
+    streams.bit_streams = Array{AbstractBitStream,1}()
+    streams.stim_streams = Array{AbstractBitStream,1}()
 end
 
 function config_poi_streams!(streams::Streams, synapses::Int64, firing_rate::Float64)

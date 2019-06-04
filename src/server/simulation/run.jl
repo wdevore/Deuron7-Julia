@@ -19,8 +19,10 @@ function run(chan::Channel{String}, simulation::String)
     # Async version to used when truly simulating.
     @async begin
         trace = try
-            simulate(chan, model)
+            cell = build_simulation!(model)
 
+            simulate(chan, model, cell)
+        
             data = basic_protocol
 
             # Populate
@@ -44,24 +46,27 @@ function run(chan::Channel{String}, simulation::String)
     end
 end
 
+cell = nothing
+
 # WARNING! Use only for development. The simulation will not run async
 # hence the client won't be notified of span completions during simulation.
 function run_debug(chan::Channel{String}, simulation::String)
-    model = Model.ModelData()    
-
     println("#####################################")
     println("#### RUNNING DEBUG VARIANT")
     println("#####################################")
+    model = Model.ModelData()
 
     Model.load!(model, APP_JSON_FILE)
     Model.load_sim!(model)
 
-    simulate(chan, model)
+    global cell = build_simulation!(model)
+
+    simulate(chan, model, cell)
 
     @async begin
         data = basic_protocol
 
-            # Populate
+        # Populate
         data["From"] = "Simulation"
         data["To"] = "Client"
         data["Type"] = "Response"
@@ -69,6 +74,32 @@ function run_debug(chan::Channel{String}, simulation::String)
     
         put!(chan, JSON.json(data))
     end
-
 end
 
+# This is for re running a simulation without creating every
+# component from scratch.
+# Most notably it performs a reset() instead of a build().
+function re_run_debug(chan::Channel{String}, simulation::String)
+    println("#####################################")
+    println("#### RE - RUNNING DEBUG VARIANT")
+    println("#####################################")
+
+    model = Model.ModelData()
+
+    Model.load!(model, APP_JSON_FILE)
+    Model.load_sim!(model)
+
+    simulate(chan, model, cell)
+
+    @async begin
+        data = basic_protocol
+
+        # Populate
+        data["From"] = "Simulation"
+        data["To"] = "Client"
+        data["Type"] = "Response"
+        data["Data"] = "Simulation Complete"
+    
+        put!(chan, JSON.json(data))
+    end
+end

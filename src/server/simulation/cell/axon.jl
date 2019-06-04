@@ -12,6 +12,7 @@ mutable struct DirectAxon <: AbstractAxon
     function DirectAxon()
         o = new()
         o.base = BaseData{UInt8}()
+        o.len = 0.0
         o
     end
 end
@@ -22,6 +23,11 @@ end
 
 function output(axon::DirectAxon)
     axon.base.output
+end
+
+function reset!(axon::DirectAxon)
+    axon.base.input = 0
+    axon.base.output = 0
 end
 
 function step!(axon::DirectAxon)

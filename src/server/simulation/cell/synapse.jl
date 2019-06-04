@@ -12,7 +12,7 @@ mutable struct Synapse <: AbstractSynapse
     id::Int64
 
     # true = excititory, false = inhibitory
-    type::Bool
+    excititory::Bool
 
     # The weight of the synapse
     w::Float64
@@ -99,7 +99,7 @@ mutable struct Synapse <: AbstractSynapse
         o.soma = soma
         o.dendrite = dendrite
         o.compartment = compartment
-        o.type = true # default to excite type
+        o.excititory = true # default to excite type
         o.preT = INITIAL_PRE_T
 
         add_synapse!(compartment, o)
@@ -113,10 +113,13 @@ function set_stream!(syn::Synapse, stream::AbstractBitStream)
 end
 
 function set_as_inhibit!(syn::Synapse)
-    syn.type = false
+    syn.excititory = false
 end
 
 function initialize!(syn::Synapse)
+	# Focus the model on the correct synapse.
+   	Model.set_active_synapse!(soma.model, syn.id)
+
 	# Set properties based on model. These drive the other properties.
    	syn.taoP = Model.taoP(soma.model)
    	syn.taoN = Model.taoN(soma.model)
@@ -187,7 +190,7 @@ function triplet_integration(syn::Synapse, t::Float64)
 
 	# The output of the stream is the input to this synapse.
    	if output(syn.stream) == 1 
-       	if syn.type # is excititory
+       	if syn.excititory
             syn.surge = syn.psp + syn.ama * exp(-syn.psp / syn.taoP)
        	else 
             syn.surge = syn.psp + syn.ama * exp(-syn.psp / syn.taoN)
@@ -207,7 +210,7 @@ function triplet_integration(syn::Synapse, t::Float64)
         updateWeight = true
     end
 
-   	if syn.type # is excititory
+   	if syn.excititory
         syn.psp = syn.surge * exp(-dt / syn.taoP)
    	else
         syn.psp = syn.surge * exp(-dt / syn.taoN)
@@ -234,7 +237,7 @@ function triplet_integration(syn::Synapse, t::Float64)
 	# samples.Sim.WeightSamples.Put(t, n.w, n.id, 0)
 
 	# Return the "value" of this synapse for this "t"
-   	if !syn.type # is inhibitory
+   	if !syn.excititory # is inhibitory
 		# samples.Sim.PspSamples.Put(t, -n.psp, n.id, 0)
         return -syn.psp * syn.w
     end

@@ -78,16 +78,15 @@ function initialize!(soma::AbstractSoma)
 end
 
 function reset!(soma::AbstractSoma)
-   	soma.apFast = 0.0
-   	soma.apSlow = 0.0
-   	soma.preT = -1000000000000000.0
-   	soma.refractoryState = false
-   	soma.refractoryCnt = 0
-   	soma.nSlowSurge = 0.0
-   	soma.nFastSurge = 0.0
-   	soma.output = 0.0
-   	soma.prevOutput = 0.0
+    soma.apFast = 0.0
+    soma.apSlow = 0.0
+    soma.preT = -1000000000000000.0
+    soma.refractoryState = false
+    soma.refractoryCnt = 0
+    soma.nSlowSurge = 0.0
+    soma.nFastSurge = 0.0
     soma.efficacyTrace = 0.0
-    
+
+   	reset!(soma.axon)
     reset!(soma.dendrite)
 end

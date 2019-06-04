@@ -17,19 +17,28 @@ include("build_neuron.jl")
 
 # Total simulation time = Sum of all spans or Spans * Duration
 
-# -_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_
-# NOTE: simulate() is called from run.jl
-# -_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_
-function simulate(chan::Channel{String}, model::Model.ModelData)
-    println("Configuring simulation...")
-    # The samples collected during the simulation.
-    samples = Samples()
-    streams = Streams()
-
+function build_simulation!(model::Model.ModelData)
     # Build neuron for simulation.
     println("Building neuron model.")
     cell = build_neuron(model)
+    # Initialize cell just once
     initialize!(cell)
+
+    cell
+end
+
+# -_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_
+# NOTE: simulate() is called from run.jl
+# -_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_
+function simulate(chan::Channel{String}, model::Model.ModelData, cell::Cell)
+    println("Configuring simulation...")
+
+    reset!(cell)
+    
+    # The samples collected during the simulation.
+    samples = Samples()
+    # The stream exercised
+    streams = Streams()
 
     println("~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-")
     duration = Model.total_simulation_time(model)
@@ -43,7 +52,6 @@ function simulate(chan::Channel{String}, model::Model.ModelData)
     synapses = Model.synapses(model)
     println("Synapses: ", synapses)
     println("~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-")
-
     
     # ~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--
     # Setup and configure the collections that hold sampling data
@@ -90,8 +98,6 @@ function simulate(chan::Channel{String}, model::Model.ModelData)
         # Notify client that a span completed.
         notify_client_span_completed(chan, span)
 
-        # sleep(0.1)
-
         # Yield for channel tasks
         yield()     
     end
@@ -99,6 +105,8 @@ function simulate(chan::Channel{String}, model::Model.ModelData)
     println("### --------- Simulaton Complete -------- ###")
 end
 
+function reset!()
+end
 
 function notify_client_span_completed(chan::Channel{String}, span::Int64)
     data = basic_protocol

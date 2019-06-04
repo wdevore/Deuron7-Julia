@@ -72,6 +72,40 @@ function draw_main_panel(gui_data::GuiData, app_data::Model.AppData, sock::Comm.
             Comm.send(sock, data)
         end
     end
+    CImGui.SameLine()
+
+    if CImGui.Button("Re-Simulate")
+        # Check that the app data is correct, for example, RangeEnd should <=
+        # to Duration.
+        range_end = Model.range_end(app_data.model)
+        duration = Model.duration(app_data.model)
+
+        if range_end > duration
+            # Issue dialog box
+            gui_data.show_warning_dialog = true
+        else            
+            # Get protocol
+            data = app_data.basic_protocol
+
+            # Populate
+            data["From"] = "Client"
+            data["To"] = "Server"
+            data["Type"] = "Cmd"
+            data["Data"] = "Re-Simulate"
+            data["Data1"] = Model.simulation(app_data.model)
+
+            if Model.is_changed(app_data.model)
+                # Save changes
+                if Model.is_app_changed(app_data.model)
+                    Model.save_data(app_data)
+                end
+                Model.load_sim!(app_data.model)
+                Model.config!(app_data)
+            end
+    
+            Comm.send(sock, data)
+        end
+    end
 
     if gui_data.show_warning_dialog
         CImGui.OpenPopup("Warning!")

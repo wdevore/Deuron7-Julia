@@ -35,6 +35,8 @@ mutable struct ModelData
         o.bug = true
         o.sim_changed = true
         o.app_changed = true
+        o.sim_data_loaded = false
+        o.app_data_loaded = false
         o
     end
 end
@@ -92,7 +94,7 @@ function load_sim!(model::ModelData)
     sim = simulation(model)
     path = data_path(model)
     file = path * sim
-    println("Loading: ", file)
+    println("Loading sim model: ", file)
 
 
     # json = open(file) do fd
@@ -348,6 +350,41 @@ function synapses!(model::ModelData, v::String)
     model.sim_changed = true
 end
 
+function active_synapse(model::ModelData)
+    model.sim["ActiveSynapse"]
+end
+function set_active_synapse!(model::ModelData, v::String)
+    v = strip_null(v)
+    set_active_synapse!(model, parse(Int64, v))
+end
+function set_active_synapse!(model::ModelData, v::Int64)
+    model.sim["ActiveSynapse"] = v
+    model.active_synapse = model.sim["ActiveSynapse"]
+
+    # Find the correct synapse node
+    for synapse in model.synapses
+        if synapse.id == model.active_synapse
+            model.synapse = model.synapses[model.active_synapse]
+            break
+        end
+    end
+
+    model.sim_changed = true
+end
+
+function percent_excititory_synapses(model::ModelData)
+    model.sim["PercentOfExcititorySynapses"]
+end
+function set_percent_excititory_synapses!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.sim["PercentOfExcititorySynapses"] = parse(Int64, v)
+    model.sim_changed = true
+end
+function set_percent_excititory_synapses!(model::ModelData, v::Float64)
+    model.sim["PercentOfExcititorySynapses"] = v
+    model.sim_changed = true
+end
+
 # If Hertz = 0 then stimulus is distributed as poisson.
 # Hertz is = cycles per second (or 1000ms per second)
 # 10Hz = 10 applied in 1000ms or every 100ms = 1000/10Hz
@@ -402,17 +439,6 @@ end
 # --------------------------------------------------------------
 # Neuron Setter/Getters
 # --------------------------------------------------------------
-function active_synapse(model::ModelData)
-    model.sim["ActiveSynapse"]
-end
-function set_active_synapse!(model::ModelData, v::String)
-    v = strip_null(v)
-    model.sim["ActiveSynapse"] = parse(Int64, v)
-    model.active_synapse = model.sim["ActiveSynapse"]
-    model.synapse = model.synapses[model.active_synapse]
-    model.sim_changed = true
-end
-
 function refractory_period(model::ModelData)
     model.neuron["RefractoryPeriod"]
 end

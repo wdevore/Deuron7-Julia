@@ -13,8 +13,16 @@ function build_neuron(model::Model.ModelData)
     # 80% Excite and 20% Inhibit synapses.
     synapses = Model.synapses(model)
 
-    excite = Int64(Float64(synapses) * 0.8)
-   	inhibit = Int64(Float64(synapses) * 0.2)
+    # What percentage of the synapses are excite types
+    percentage_of_excititory = Model.percent_excititory_synapses(model) / 100.0
+    percentage_of_inhibitory = 1.0 - percentage_of_excititory
+
+    excite = Int64(round((Float64(synapses) * percentage_of_excititory)))
+    inhibit = Int64(round((Float64(synapses) * percentage_of_inhibitory)))
+       
+    println("Number of excititory synapses: ", excite)
+    println("Number of inhibitory synapses: ", inhibit)
+
     firing_rate = Model.firing_rate(model)
 
     # Generated ids
@@ -41,10 +49,15 @@ function build_neuron(model::Model.ModelData)
     # The StreamMerger has two streams feeding into it: Poisson and Pattern.
     for syn_id in 1:excite
         synapse = Synapse(soma, dendrite, compartment, model)
+        # Note: this ID is used to reference the correct synapstic prorperties
+        # from the model during the synapse's initialization.
         synapse.id = synID
 
         # Create StreamMerger to hold Poisson and Pattern streams.
         merger = Simulation.StreamMerger()
+        
+        # Attach the stream input to the synapse.
+        set_stream!(synapse, merger)
 
         # REGION ------------------------------------------------------
         # Create poisson stream and add to merger stream.
@@ -61,8 +74,36 @@ function build_neuron(model::Model.ModelData)
 
         synID += 1
     end
-    println("Excite synapses built.")
-    
+    println("Excititory synapses built.")
+
+    for syn_id in 1:inhibit
+        synapse = Synapse(soma, dendrite, compartment, model)
+        synapse.id = synID
+        set_as_inhibit!(synapse)
+
+        # Create StreamMerger to hold Poisson and Pattern streams.
+        merger = Simulation.StreamMerger()
+
+        # Attach the stream input to the synapse.
+        set_stream!(synapse, merger)
+
+        # REGION ------------------------------------------------------
+        # Create poisson stream and add to merger stream.
+        # Each poi stream gets a different starter seed.
+        seed = Int64(round(rand(1)[1] * 10000.0))
+        poi_stream = Simulation.PoissonStream(UInt64(seed), firing_rate)
+        Simulation.add_stream!(merger, poi_stream)
+        # END-REGION ------------------------------------------------------
+
+        # REGION ------------------------------------------------------
+        # Add pattern stream. The synapse's id will select the sub-stream
+        Simulation.add_stream!(merger, pat_stream)
+        # END-REGION ------------------------------------------------------
+
+        synID += 1
+    end
+    println("Inhibitory synapses built.")
+
     # A neuron is a cell.
     cell = Cell(soma, model)
 
