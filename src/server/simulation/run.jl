@@ -59,9 +59,46 @@ function run_debug(chan::Channel{String}, simulation::String)
     Model.load!(model, APP_JSON_FILE)
     Model.load_sim!(model)
 
-    global cell = build_simulation!(model)
+    # The samples collected during the simulation.
+    samples = Model.Samples()
 
-    simulate(chan, model, cell)
+    # config streams so build can bind to them.
+    streams = Streams()
+
+    # ~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--
+    # Setup and configure the collections that hold sampling data
+    # captured during simulation.
+    # ~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--
+    config_streams!(streams)
+
+    println("~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-")
+    duration = Model.total_simulation_time(model)
+    println("Simulation duration: ", duration)
+
+    # How many synapses afferent on the dendrite.
+    synapses = Model.synapses(model)
+    println("Synapses: ", synapses)
+
+    # Span time is how many samples to capture before saving to disk.
+    span_time = Model.span_time(model)
+    println("Span time: ", span_time)
+    
+    # Poi streams have a firing rate property
+    firing_rate = Model.firing_rate(model)
+    println("firing_rate: ", firing_rate)
+    println("~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-")
+    
+    # We "set" the samples for the first span.
+    Model.config_samples!(samples, synapses, span_time)
+
+    config_poi_streams!(streams, synapses, firing_rate)
+
+    config_stimulus_streams!(streams, model)
+    
+    # "cell" is also used during re-run
+    global cell = build_simulation!(model, samples, streams)
+
+    simulate(chan, model, samples, streams, cell)
 
     @async begin
         data = basic_protocol
@@ -76,9 +113,8 @@ function run_debug(chan::Channel{String}, simulation::String)
     end
 end
 
-# This is for re running a simulation without creating every
+# This is for RE running a simulation without creating every
 # component from scratch.
-# Most notably it performs a reset() instead of a build().
 function re_run_debug(chan::Channel{String}, simulation::String)
     println("#####################################")
     println("#### RE - RUNNING DEBUG VARIANT")
@@ -89,7 +125,10 @@ function re_run_debug(chan::Channel{String}, simulation::String)
     Model.load!(model, APP_JSON_FILE)
     Model.load_sim!(model)
 
-    simulate(chan, model, cell)
+    # The samples collected during the simulation.
+    samples = Model.Samples()
+
+    simulate(chan, model, samples, cell)
 
     @async begin
         data = basic_protocol

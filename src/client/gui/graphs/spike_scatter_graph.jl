@@ -27,11 +27,15 @@ using ..Gui
 mutable struct SpikeScatterGraph <: AbstractGraph
     show_vertical_t_bar_markers::Bool
     time_pos::Int64
+    show_poission_data::Bool
+    show_stimulus_data::Bool
 
     function SpikeScatterGraph()
         o = new()
         # TODO capture model data here to save time.
         o.show_vertical_t_bar_markers = false
+        o.show_poission_data = true
+        o.show_stimulus_data = true
         o
     end
 end
@@ -71,6 +75,10 @@ function draw_header(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Mod
         @c CImGui.SliderFloat("Scroll velocity", &pos, -5.0, 5.0, "%.2f")
         Model.set_scroll!(model, Float64(pos))
 
+        @c CImGui.Checkbox("Poisson Data", &graph.show_poission_data)
+        CImGui.SameLine(250)
+        @c CImGui.Checkbox("Stimulus Data", &graph.show_stimulus_data)
+
         range_start = Model.range_start(model)
         range_end = Model.range_end(model) # duration
         range = range_end - range_start
@@ -80,7 +88,7 @@ function draw_header(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Mod
         else
             graph.show_vertical_t_bar_markers = false
         end
-    
+
         CImGui.TreePop()
     end
 end
@@ -209,34 +217,36 @@ function draw_spikes(graph::SpikeScatterGraph, gui_data::Gui.GuiData,
     # Render poisson spikes
     # ------------------------------------------------------------------------
     # Tracks a spike row.
-    w_y = 1.0 # Offset from border. 0 is underneath it.
+    if graph.show_poission_data
+        w_y = 1.0 # Offset from border. 0 is underneath it.
 
-    # A span is a collection of rows (aka synapses)
-    for id in 1:synapses
-        # Narrow down to a single row by id
-        synaptic_samples = samples.poi_samples[id, :]
-        # if model.bug println("synaptic_samples: ", synaptic_samples) end
+        # A span is a collection of rows (aka synapses)
+        for id in 1:synapses
+            # Narrow down to a single row by id
+            synaptic_samples = samples.poi_samples[id, :]
+            # if model.bug println("synaptic_samples: ", synaptic_samples) end
 
-        # Iterate samples with the defined range.
-        for t in range_start:range_end
-            if synaptic_samples[t] == 1 # A spike = 1
-                # The sample value needs to be mapped
-                u_x = map_sample_to_unit(Float64(t), Float64(range_start), Float64(range_end))
-                w_x = map_unit_to_window(u_x, 0.0, canvas_width)
-                (l_x, l_y) = map_window_to_local(w_x, w_y, canvas_pos)
-                # if model.bug print(l_x, ",") end
+            # Iterate samples with the defined range.
+            for t in range_start:range_end
+                if synaptic_samples[t] == 1 # A spike = 1
+                    # The sample value needs to be mapped
+                    u_x = map_sample_to_unit(Float64(t), Float64(range_start), Float64(range_end))
+                    w_x = map_unit_to_window(u_x, 0.0, canvas_width)
+                    (l_x, l_y) = map_window_to_local(w_x, w_y, canvas_pos)
+                    # if model.bug print(l_x, ",") end
 
-                CImGui.AddLine(draw_list,
+                    CImGui.AddLine(draw_list,
                     ImVec2(l_x, l_y), 
                     ImVec2(l_x, l_y + SPIKE_HEIGHT), 
                     YELLOW, LINE_THICKNESS)
+                end
+
+                # if model.bug println("vt: ", vt) end
             end
 
-            # if model.bug println("vt: ", vt) end
+            # Update row/y value and offset by a few pixels
+            w_y += SPIKE_HEIGHT + SPIKE_ROW_OFFSET
         end
-
-        # Update row/y value and offset by a few pixels
-        w_y += SPIKE_HEIGHT + SPIKE_ROW_OFFSET
     end
 
     # model.bug = false
@@ -244,34 +254,34 @@ function draw_spikes(graph::SpikeScatterGraph, gui_data::Gui.GuiData,
     # ------------------------------------------------------------------------
     # Render stimulus spikes
     # ------------------------------------------------------------------------
-    w_y = 1.0 # Offset from border. 0 is underneath it.
+    if graph.show_stimulus_data
+        w_y = 1.0 # Offset from border. 0 is underneath it.
 
-    # A span is a collection of rows (aka synapses)
-    for id in 1:synapses
-        # Narrow down to a single row by id
-        synaptic_samples = samples.stimulus_samples[id, :]
-        # if model.bug println("synaptic_samples: ", synaptic_samples) end
+        # A span is a collection of rows (aka synapses)
+        for id in 1:synapses
+            # Narrow down to a single row by id
+            synaptic_samples = samples.stimulus_samples[id, :]
+            # if model.bug println("synaptic_samples: ", synaptic_samples) end
 
-        # Iterate samples with the defined range.
-        for t in range_start:range_end
-            if synaptic_samples[t] == 1 # A spike = 1
-                # The sample value needs to be mapped
-                u_x = map_sample_to_unit(Float64(t), Float64(range_start), Float64(range_end))
-                w_x = map_unit_to_window(u_x, 0.0, canvas_width)
-                (l_x, l_y) = map_window_to_local(w_x, w_y, canvas_pos)
-                # if model.bug print(l_x, ",") end
+            # Iterate samples with the defined range.
+            for t in range_start:range_end
+                if synaptic_samples[t] == 1 # A spike = 1
+                    # The sample value needs to be mapped
+                    u_x = map_sample_to_unit(Float64(t), Float64(range_start), Float64(range_end))
+                    w_x = map_unit_to_window(u_x, 0.0, canvas_width)
+                    (l_x, l_y) = map_window_to_local(w_x, w_y, canvas_pos)
 
-                CImGui.AddLine(draw_list,
+                    CImGui.AddLine(draw_list,
                     ImVec2(l_x, l_y), 
                     ImVec2(l_x, l_y + SPIKE_HEIGHT), 
                     LIME_GREEN, LINE_THICKNESS)
+                end
+
             end
 
-            # if model.bug println("vt: ", vt) end
+            # Update row/y value and offset by a few pixels
+            w_y += SPIKE_HEIGHT + SPIKE_ROW_OFFSET
         end
-
-        # Update row/y value and offset by a few pixels
-        w_y += SPIKE_HEIGHT + SPIKE_ROW_OFFSET
     end
 
     CImGui.PopClipRect(draw_list)

@@ -89,7 +89,7 @@ end
 # is as follows:
 # |30ms pattern|70ms IPI|30ms pattern|70ms IPI|30ms pattern|70ms IPI|...
 
-# Step the active synapse stream
+# step should be called only once for the pattern and NOT for each synapse.
 function step!(stream::RegularPatternStream)
     stream.count -= 1
 

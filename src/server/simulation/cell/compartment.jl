@@ -15,6 +15,9 @@ mutable struct Compartment <: AbstractCompartment
         o.soma = soma
         o.dendrite = dendrite
         o.synapses = Array{AbstractSynapse,1}()
+
+        add_compartment!(dendrite, o)
+
         o
     end
 end
@@ -25,8 +28,8 @@ end
 
 function initialize!(compartment::Compartment)
 	# Set properties based on model. These drive the other properties.
-   	soma.weight_max = Model.weight_max(soma.model)
-   	soma.weight_divisor = Model.weight_divisor(soma.model)
+    compartment.weight_max = Model.weight_max(compartment.model)
+    compartment.weight_divisor = Model.weight_divisor(compartment.model)
 
     for synapse in compartment.synapses
         initialize!(synapse)
@@ -37,4 +40,14 @@ function reset!(compartment::Compartment)
     for synapse in compartment.synapses
         reset!(synapse)
     end
+end
+
+function integrate!(compartment::Compartment, t::Int64)
+    psp = 0.0
+
+    for synapse in compartment.synapses
+        psp += integrate!(synapse, t)
+    end
+
+    psp
 end

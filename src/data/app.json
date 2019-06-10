@@ -1,11 +1,13 @@
 {
   "Simulation": "sim_1.json",
+  "OutputSomaAPFastFiles": "soma_apFast_samples_span_",
   "DataPath": "../data/",
   "OutputPoissonFiles": "poi_samples_span_",
   "Scroll": 0.0,
   "DataOutputPath": "/media/RAMDisk/",
   "RangeEnd": 539,
   "SourceStimulus": "stim_2",
+  "OutputCellSpikeFiles": "cell_spike_samples_",
   "Duration": 1000,
   "AppRootPath": "/home/iposthuman/Documents/Development/Julia/Source/Deuron7-Julia/src/",
   "RangeStart": 1,

@@ -83,6 +83,7 @@ function start(soc::SockServer)
     Sockets.close(soc.server)
 
     println("Server is shutdown")
+    println("Goodbye.")
 end
 
 end # Module -------------------------------------------

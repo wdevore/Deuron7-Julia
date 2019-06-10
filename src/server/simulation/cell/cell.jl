@@ -13,14 +13,16 @@ mutable struct Cell <: AbstractBitStream
     # Contains a Soma.
     soma::AbstractSoma 
     model::Model.ModelData
+    samples::Model.Samples
 
     # Interfaces with InterNeurons (IN)
     # Dendrites Compartments also interact with INs
 
-    function Cell(soma::AbstractSoma, model::Model.ModelData)
+    function Cell(soma::AbstractSoma, model::Model.ModelData, samples::Model.Samples)
         o = new()
         o.soma = soma
         o.model = model
+        o.samples = samples
         o
     end
 end
@@ -31,4 +33,12 @@ end
 
 function reset!(cell::Cell)
     reset!(cell.soma)
+end
+
+function integrate!(cell::Cell, t::Int64)
+    integrate!(cell.soma, t)
+end
+
+function output(cell::Cell)
+    output(cell.soma)
 end

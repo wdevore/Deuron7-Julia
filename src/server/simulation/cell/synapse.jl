@@ -101,7 +101,7 @@ mutable struct Synapse <: AbstractSynapse
         o.compartment = compartment
         o.excititory = true # default to excite type
         o.preT = INITIAL_PRE_T
-
+        o.id = 0
         add_synapse!(compartment, o)
 
         o
@@ -118,28 +118,28 @@ end
 
 function initialize!(syn::Synapse)
 	# Focus the model on the correct synapse.
-   	Model.set_active_synapse!(soma.model, syn.id)
+   	Model.set_active_synapse!(syn.model, syn.id)
 
 	# Set properties based on model. These drive the other properties.
-   	syn.taoP = Model.taoP(soma.model)
-   	syn.taoN = Model.taoN(soma.model)
-   	syn.mu = Model.mu(soma.model)
-   	syn.distance = Model.distance(soma.model)
-   	syn.lambda = Model.lambda(soma.model)
-   	syn.amb = Model.amb(soma.model)
-   	syn.w = Model.weight(soma.model)
-   	syn.alpha = Model.alpha(soma.model)
-   	syn.learningRateFast = Model.learning_rate_fast(soma.model)
-   	syn.learningRateSlow = Model.learning_rate_slow(soma.model)
-   	syn.taoI = Model.taoI(soma.model)
-   	syn.ama = Model.ama(soma.model)
+   	syn.taoP = Model.taoP(syn.model)
+   	syn.taoN = Model.taoN(syn.model)
+   	syn.mu = Model.mu(syn.model)
+   	syn.distance = Model.distance(syn.model)
+   	syn.lambda = Model.lambda(syn.model)
+   	syn.amb = Model.amb(syn.model)
+   	syn.w = Model.weight(syn.model)
+   	syn.alpha = Model.alpha(syn.model)
+   	syn.learningRateFast = Model.learning_rate_fast(syn.model)
+   	syn.learningRateSlow = Model.learning_rate_slow(syn.model)
+   	syn.taoI = Model.taoI(syn.model)
+   	syn.ama = Model.ama(syn.model)
 
 	# Calc this synapses's reaction to the AP based on its
 	# distance from the soma.
    	syn.distanceEfficacy = AP_efficacy(syn.compartment.dendrite, syn.distance)
 
-   	syn.wMax = Model.w_max(soma.model)
-   	syn.wMin = Model.w_min(soma.model)
+   	syn.wMax = Model.w_max(syn.model)
+   	syn.wMin = Model.w_min(syn.model)
 end
 
 # Reset properties to default values from model.
@@ -163,7 +163,7 @@ function pre_integrate!(syn::Synapse)
 end
 
 # The main integration. Returns a float value
-function integrate!(syn::Synapse, t::Float64)
+function integrate!(syn::Synapse, t::Int64)
     triplet_integration(syn, t)
 end
 
@@ -177,10 +177,10 @@ end
 #
 # Depression: fast post trace with at pre spike
 # Potentiation: slow post trace at post spike
-function triplet_integration(syn::Synapse, t::Float64)
+function triplet_integration(syn::Synapse, t::Int64)
 	# Calc psp based on current dynamics: (t - preT). As dt increases
-	# psp decreases asymtotically to zero.
-    dt = t - syn.preT
+	# psp will decrease asymtotically to zero.
+    dt = Float64(t) - syn.preT
     
 	# samples.Sim.DtSamples.Put(t, dt, syn.id, 0)
 
@@ -189,7 +189,9 @@ function triplet_integration(syn::Synapse, t::Float64)
    	updateWeight = false
 
 	# The output of the stream is the input to this synapse.
-   	if output(syn.stream) == 1 
+	# The stream is almost always a StreamMerger
+   	if output(syn.stream) == 1
+       	println("(", t, ") syn: ", syn.id)
        	if syn.excititory
             syn.surge = syn.psp + syn.ama * exp(-syn.psp / syn.taoP)
        	else 
@@ -225,7 +227,7 @@ function triplet_integration(syn::Synapse, t::Float64)
 		# #######################################
 		# Read pre trace (aka psp) and slow AP trace for adjusting weight accordingly.
 		#     Post efficacy                                          weight dependence                 triplet sum
-        dwP = efficacy(syn.soma) * syn.distanceEfficacy * weight_factor(syn, true) * (syn.psp + syn.soma.apSlowPrior)
+        dwP = efficacy_trace(syn.soma) * syn.distanceEfficacy * weight_factor(syn, true) * (syn.psp + syn.soma.apSlowPrior)
         updateWeight = true
     end
 
@@ -254,7 +256,7 @@ end
 # In other words, the efficacy of a spike is suppressed by
 # the proximity of a previous spike.
 function efficacy(syn::Synapse, dt)
-   	1 - exp(-dt / syn.taoJ)
+   	1 - exp(-dt / syn.taoI)
 end
 
 # mu = 0.0 = additive, mu = 1.0 = multiplicative

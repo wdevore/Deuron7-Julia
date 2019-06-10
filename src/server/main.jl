@@ -8,17 +8,46 @@ include("simulation/simulation.jl")
 
 include("app/socket.jl")
 
+using JSON
 using .Server
 
 soc_server = Server.SockServer()
 
 @async while true
     input = readavailable(stdin)
-    if input[1] == 0x71 # "q" == quit
-        exit(1)
+
+    msg = String(input[1:length(input) - 1])
+    # println("input: ", msg)
+    if msg == "q"  #0x71 # "q" == quit
+        println("Quiting...")
+
+        trace = try
+            if soc_server.running
+                # println("Server is running. Toggling running flag...")
+                soc_server.running = false
+            end
+
+            nothing
+        catch ex
+            println("### Exception ###:\n", ex)
+            stacktrace(catch_backtrace())
+        end
+
+        if trace ≠ nothing
+            println(trace)
+            println("############################################")
+            println("Goodbye.")
+            exit(1)
+        end
+
+    elseif msg == "help"
+        println("--------------------------------------------")
+        println("Commands:")
+        println("  run")
+        println("  run debug")
+        println("--------------------------------------------")
     end
 end
-
 
 Server.start(soc_server)
 

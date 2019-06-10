@@ -63,3 +63,7 @@ end
 function output(stream::PoissonStream)
     stream.base.output & 0x01
 end
+
+function output(stream::PoissonStream, id::Int64)
+    stream.base.output & 0x01
+end

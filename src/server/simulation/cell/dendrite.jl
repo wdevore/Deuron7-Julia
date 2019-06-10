@@ -29,6 +29,10 @@ function initialize!(dendrite::AbstractDendrite)
     end
 end
 
+function add_compartment!(dendrite::AbstractDendrite, compartment::Compartment)
+    push!(dendrite.compartments, compartment)
+end
+
 function reset!(dendrite::AbstractDendrite)
     for compartment in dendrite.compartments
         reset!(compartment)
@@ -42,4 +46,14 @@ function AP_efficacy(dendrite::AbstractDendrite, distance::Float64)
     end
 
     exp(-(dendrite.length - distance) / dendrite.taoEff)
+end
+
+function integrate!(dendrite::AbstractDendrite, t::Int64)
+    psp = 0.0
+    
+    for compartment in dendrite.compartments
+        psp += integrate!(compartment, t)
+    end
+
+    psp
 end

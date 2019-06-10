@@ -17,6 +17,11 @@ mutable struct DirectAxon <: AbstractAxon
     end
 end
 
+function set!(axon::DirectAxon, v::UInt8)
+    axon.base.input = v
+    axon.base.output = v
+end
+
 function input(axon::DirectAxon)
     axon.base.input
 end

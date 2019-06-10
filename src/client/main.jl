@@ -14,6 +14,8 @@
 # add JSON
 # add CSyntax
 # add CImGui
+include("../server/simulation/simulation.jl")
+
 include("../data/model/model.jl")
 
 include("../client/app/handlers.jl")

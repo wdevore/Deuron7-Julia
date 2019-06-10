@@ -17,11 +17,13 @@ include("build_neuron.jl")
 
 # Total simulation time = Sum of all spans or Spans * Duration
 
-function build_simulation!(model::Model.ModelData)
+function build_simulation!(model::Model.ModelData, samples::Model.Samples, streams::Streams)
     # Build neuron for simulation.
+    
     println("Building neuron model.")
-    cell = build_neuron(model)
-    # Initialize cell just once
+    cell = build(model, samples, streams)
+
+    # Initialize cell just once based on Model data
     initialize!(cell)
 
     cell
@@ -30,40 +32,16 @@ end
 # -_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_
 # NOTE: simulate() is called from run.jl
 # -_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_-_---_
-function simulate(chan::Channel{String}, model::Model.ModelData, cell::Cell)
+# Once the server is started it builds the components to support the simualtion.
+# Simulate does not create anything it simply resets for a simulation run.
+function simulate(chan::Channel{String},
+    model::Model.ModelData, samples::Model.Samples, streams::Streams,
+    cell::Cell)
     println("Configuring simulation...")
 
     reset!(cell)
-    
-    # The samples collected during the simulation.
-    samples = Samples()
-    # The stream exercised
-    streams = Streams()
 
-    println("~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-")
-    duration = Model.total_simulation_time(model)
-    println("Simulation duration: ", duration)
-
-    # Span time is how many samples to capture before saving to disk.
     span_time = Model.span_time(model)
-    println("Span time: ", span_time)
-
-    # How many synapses afferent on the dendrite.
-    synapses = Model.synapses(model)
-    println("Synapses: ", synapses)
-    println("~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-")
-    
-    # ~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--
-    # Setup and configure the collections that hold sampling data
-    # captured during simulation.
-    # ~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--
-    config_streams!(streams)
-
-    # Poi streams have a firing rate property
-    firing_rate = Model.firing_rate(model)
-    config_poi_streams!(streams, synapses, firing_rate)
-
-    config_stimulus_streams!(streams, model)
 
     # ~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--
     # Now the simulation starts.
@@ -74,32 +52,35 @@ function simulate(chan::Channel{String}, model::Model.ModelData, cell::Cell)
 
     # Run each span
     for span in 1:spans
-        # We "reset" the samples for the next span.
-        config_samples!(samples, synapses, span_time)
     
         # "t" is a single time step representing a single TimeScale.
         # If the TimeScale = 100us then if t = 2 then 100us passed
         # and when t = 3 then 200us passed etc.
         for t in 1:span_time  # a single tick of the simulation.
             # This is the core of the simulation.
-            # integrate!(cell)
+            integrate!(cell, t)
 
+            # Collecting is centralized in streams.jl for consistency.
             # Collect all data for analysis by client.
             collect!(streams, samples, t)
+            collect!(samples, cell, t)
 
-            # Exercise all stimulus.
+            # Exercise all stimulus which means all merger streams.
             # This causes each stream to update and move its internal value to its output.
             exercise!(streams)
         end
 
         # We have finished a span, write it out to disk
-        write_samples!(samples, model, span)
+        Model.write_samples!(samples, model, span)
 
         # Notify client that a span completed.
         notify_client_span_completed(chan, span)
 
         # Yield for channel tasks
-        yield()     
+        yield()
+
+        # We "reset" the samples for the next span.
+        Model.reset_samples!(samples)
     end
 
     println("### --------- Simulaton Complete -------- ###")

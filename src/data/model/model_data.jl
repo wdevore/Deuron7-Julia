@@ -274,6 +274,14 @@ function set_time_scale!(model::ModelData, v::Int64)
     model.app_changed = true
 end
 
+function frequency(model::ModelData)
+    model.data["Frequency"]
+end
+function set_frequency!(model::ModelData, v::Int64)
+    model.data["Frequency"] = v
+    model.app_changed = true
+end
+
 function data_output_path(model::ModelData)
     model.data["DataOutputPath"]
 end
@@ -310,11 +318,21 @@ function set_source_stimulus!(model::ModelData, v::String)
     model.app_changed = true
 end
 
-function frequency(model::ModelData)
-    model.data["Frequency"]
+function output_cell_spikes(model::ModelData)
+    model.data["OutputCellSpikeFiles"]
 end
-function set_frequency!(model::ModelData, v::Int64)
-    model.data["Frequency"] = v
+function set_output_cell_spikes!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.data["OutputCellSpikeFiles"] = v
+    model.app_changed = true
+end
+
+function output_soma_apFast(model::ModelData)
+    model.data["OutputSomaAPFastFiles"]
+end
+function set_output_soma_apFast!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.data["OutputSomaAPFastFiles"] = v
     model.app_changed = true
 end
 
@@ -363,7 +381,7 @@ function set_active_synapse!(model::ModelData, v::Int64)
 
     # Find the correct synapse node
     for synapse in model.synapses
-        if synapse.id == model.active_synapse
+        if synapse["id"] == model.active_synapse
             model.synapse = model.synapses[model.active_synapse]
             break
         end
