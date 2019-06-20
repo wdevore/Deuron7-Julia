@@ -191,7 +191,7 @@ function triplet_integration(syn::Synapse, t::Int64)
 	# The output of the stream is the input to this synapse.
 	# The stream is almost always a StreamMerger
    	if output(syn.stream) == 1
-       	println("(", t, ") syn: ", syn.id)
+       	# println("(", t, ") syn: ", syn.id)
        	if syn.excititory
             syn.surge = syn.psp + syn.ama * exp(-syn.psp / syn.taoP)
        	else 

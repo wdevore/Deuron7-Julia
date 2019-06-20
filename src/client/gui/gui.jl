@@ -38,6 +38,8 @@ function run(gui_data::GuiData, app_data::Model.AppData, sock::Comm.SocClient)
 
         Graphs.draw(Graphs.spikes_graph, gui_data::GuiData, app_data.model, app_data.samples)
 
+        Graphs.draw(Graphs.soma_apFast_graph, gui_data::GuiData, app_data.model, app_data.samples)
+
         end_render(gui_data)
     
         # App communications

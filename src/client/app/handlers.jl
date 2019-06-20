@@ -57,8 +57,7 @@ function handle_simulation_to_client(data::Dict{String,Any})
             # The simulation on the server completed a span
             # Read span into Samples for both poisson and stimulus
             span = data["Data2"]
-            Model.read_poi_samples(app_data.samples, app_data.model, span) 
-            Model.read_stimulus_samples(app_data.samples, app_data.model, span) 
+            Model.read_samples(app_data.samples, app_data.model, span) 
         end
     end
 

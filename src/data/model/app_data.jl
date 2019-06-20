@@ -4,6 +4,7 @@ mutable struct AppData
 
     basic_protocol::Dict{String,Any}
 
+    # Samples holds all the sampled data in the sim or app.
     samples::Samples
 
     function AppData()
@@ -13,8 +14,6 @@ mutable struct AppData
 
         o.basic_protocol = JSON.parsefile("../data/com_protocol_basic.json")
         o.samples = Samples()
-
-        # config_spans!(o.samples)
 
         o
     end

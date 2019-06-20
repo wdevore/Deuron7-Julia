@@ -15,8 +15,23 @@ using CImGui.GLFWBackend
 using CImGui.OpenGLBackend
 using CImGui.GLFWBackend.GLFW
 using CImGui.OpenGLBackend.ModernGL
-using CImGui: ImVec2, ImVec4, IM_COL32, ImU32
+using CImGui: ImVec2, ImVec4, IM_COL32, ImU32, ImColor, ImColor_ImColorFloat
 using Printf
+
+const MAX_VERTICAL_BARS = 250
+const LINE_THICKNESS = 1.0
+
+const GRAY = 64
+const YELLOW = IM_COL32(255, 255, 0, 255)
+const GREEN = IM_COL32(0, 255, 0, 255)
+const GREEN_TRAN = IM_COL32(0, 255, 0, 128)
+const WHITE_TRAN = IM_COL32(255, 255, 255, 100)
+const LIME_GREEN = IM_COL32(166, 255, 77, 255)
+const BLUE = IM_COL32(26, 209, 255, 255)
+const ORANGE = IM_COL32(255, 128, 0, 255)
+const LIGHT_BLUE = IM_COL32(121, 189, 232, 255)
+const GREY = IM_COL32(100, 100, 100, 255)
+const LIGHT_GREY = IM_COL32(200, 200, 200, 255)
 
 abstract type AbstractGraph end
 
@@ -40,8 +55,29 @@ function lerp(min::Float64, max::Float64, t::Float64)
     min * (1.0 - t) + max * t
 end
 
+# Map from sample-space to unit-space where unit-space is 0->1
+function map_sample_to_unit(v::Float64, min::Float64, max::Float64)
+    linear(min, max, v) 
+end
+
+# Map from unit-space to window-space
+function map_unit_to_window(v::Float64, min::Float64, max::Float64)
+    lerp(min, max, v) 
+end
+
+# Local = graph-space
+function map_window_to_local(x::Float64, y::Float64, offsets::CImGui.LibCImGui.ImVec2)
+    (offsets.x + x, offsets.y + y)
+end
+
+function scroll_velocity(scroll::Float64)
+    sign(scroll) * exp(sign(scroll) * scroll)
+end
+
 include("spike_scatter_graph.jl")
+include("soma_ap_fast_graph.jl")
 
 spikes_graph = Graphs.SpikeScatterGraph()
+soma_apFast_graph = Graphs.SomaAPFastGraph()
 
 end # Module ---------------------------------------

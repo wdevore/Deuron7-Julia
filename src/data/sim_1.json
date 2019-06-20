@@ -3,7 +3,7 @@
   "ActiveSynapse": 1,
   "Poisson_Pattern_spread": 50,
   "Poisson_Pattern_min": 50,
-  "Firing_Rate": 0.02,
+  "Firing_Rate": 0.005,
   "Neuron": {
     "ntao": 10,
     "Dendrites": {

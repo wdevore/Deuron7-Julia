@@ -1,67 +1,26 @@
 using ...Model
 using ..Gui
 
-# This graph renders chains of Spikes
-# Each spike is a vertical lines about N pixels in height
-# Each row is seperated by ~2px.
-# Poisson spikes are orange, AP spikes are green.
-# Poisson is drawn first then AP.
-#
-# Graph is shaped like this:
-#      .----------------> +X
-#  1   :  |   ||     |   | |       ||     |
-#  2   :    |   |   ||     ||     |    |        <-- a row ~2px height
-#  3   :   |    |    |         | |   |     |
-#      v
-#      +Y
-#
-# Only the X-axis is mapped Y is simply a height is graph-space.
-#
-# The graph shows only a few spans at any one time.
-# |<------------------------------ Duration --------------------------->|
-# |<--- Span ---><--- Span ---><--- Span ---><--- Span ---><--- Span --->
-# |              |<-------------- Graph view -------------|
-#
-# The graph only shows up to 3 spans at a time.
-
-mutable struct SpikeScatterGraph <: AbstractGraph
+# Data is a list of floats. This graph connects them end to end forming
+# a curve.
+# The data is loaded ???
+mutable struct SomaAPFastGraph <: AbstractGraph
     show_vertical_t_bar_markers::Bool
     time_pos::Int64
-    show_poission_data::Bool
-    show_stimulus_data::Bool
 
-    function SpikeScatterGraph()
+    function SomaAPFastGraph()
         o = new()
-        # TODO capture model data here to save time.
         o.show_vertical_t_bar_markers = false
-        o.show_poission_data = true
-        o.show_stimulus_data = true
         o
     end
 end
 
-function draw_header(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Model.ModelData)
-    if CImGui.TreeNode("Controls##1")
-        # CImGui.PushItemWidth(80)
-        # # Row 1 *****************************************************
-        # gui_data.buffer = Model.prep_field(Model.range_start(model), 10)
-        # returned = CImGui.InputText("Range Start##1", gui_data.buffer, 10, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
-        # if returned
-        #     Model.set_range_start!(model, gui_data.buffer)
-        # end
-        # CImGui.SameLine(250)
-
-        # gui_data.buffer = Model.prep_field(Model.range_end(model), 10)
-        # returned = CImGui.InputText("Range End##1", gui_data.buffer, 10, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
-        # if returned
-        #     Model.set_range_end!(model, gui_data.buffer)
-        # end
-        # CImGui.PopItemWidth()
-
+function draw_header(graph::SomaAPFastGraph, gui_data::Gui.GuiData, model::Model.ModelData)
+    if CImGui.TreeNode("Controls##2")
         duration = Cint(Model.duration(model))
         begin_v = Cint(Model.range_start(model))
         end_v = Cint(Model.range_end(model))
-        @c CImGui.DragIntRange2("Range##1", &begin_v, &end_v, 1, 1, duration, "Start: %d", "End: %d")
+        @c CImGui.DragIntRange2("Range##2", &begin_v, &end_v, 1, 1, duration, "Start: %d", "End: %d")
         if Int64(begin_v) > 0 && Int64(end_v) <= duration
             if Int64(begin_v) < Int64(end_v)
                 Model.set_range_start!(model, Int64(begin_v))
@@ -69,13 +28,9 @@ function draw_header(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Mod
             end
         end
 
-        pos = Cfloat(0.0) #Cfloat(Model.window_position(model))
+        pos = Cfloat(0.0)
         @c CImGui.SliderFloat("Scroll velocity", &pos, -5.0, 5.0, "%.2f")
         Model.set_scroll!(model, Float64(pos))
-
-        @c CImGui.Checkbox("Poisson Data", &graph.show_poission_data)
-        CImGui.SameLine(250)
-        @c CImGui.Checkbox("Stimulus Data", &graph.show_stimulus_data)
 
         range_start = Model.range_start(model)
         range_end = Model.range_end(model) # duration
@@ -93,10 +48,8 @@ end
 
 const WINDOW_WIDTH = 1000
 const WINDOW_HEIGHT = 300
-const SPIKE_ROW_OFFSET = 2 # Adds a gap between rows
-const SPIKE_HEIGHT = 10
 
-function draw_spikes(graph::SpikeScatterGraph, gui_data::Gui.GuiData,
+function draw_data(graph::SomaAPFastGraph, gui_data::Gui.GuiData,
     draw_list::Ptr{CImGui.LibCImGui.ImDrawList},
     canvas_pos::CImGui.LibCImGui.ImVec2, canvas_size::CImGui.LibCImGui.ImVec2,
     model::Model.ModelData, samples::Model.Samples)
@@ -115,6 +68,7 @@ function draw_spikes(graph::SpikeScatterGraph, gui_data::Gui.GuiData,
     span_time = Model.span_time(model)
     duration = Model.duration(model)
     canvas_width = Float64(canvas_size.x)
+    canvas_height = Float64(canvas_size.y)
 
     # ------------------------------------------------------------------------
     # Adjust range_start and range_end
@@ -200,84 +154,51 @@ function draw_spikes(graph::SpikeScatterGraph, gui_data::Gui.GuiData,
         time_pos += 1
     end
     # ------------------------------------------------------------------------
+    s_y = 0.0
+    pl_y = 0.0 # previously mapped y value
+    pl_x = 0.0 # previously mapped x value
 
     # ------------------------------------------------------------------------
-    # Render poisson spikes
+    # Render segmented curve
     # ------------------------------------------------------------------------
-    # Tracks a spike row.
-    if graph.show_poission_data
-        w_y = 1.0 # Offset from border. 0 is underneath it.
+    # A span is a collection of rows
+    data_samples = samples.soma_apFast_samples
 
-        # A span is a collection of rows (aka synapses)
-        for id in 1:synapses
-            # Narrow down to a single row by id
-            synaptic_samples = samples.poi_samples[id, :]
-            # if model.bug println("synaptic_samples: ", synaptic_samples) end
+    # Iterate samples with the defined range. "t" is mapped as "x" coord
+    for t in range_start:range_end
+        s_y = data_samples.samples[t]
 
-            # Iterate samples with the defined range.
-            for t in range_start:range_end
-                if synaptic_samples[t] == 1 # A spike = 1
-                    # The sample value needs to be mapped
-                    u_x = map_sample_to_unit(Float64(t), Float64(range_start), Float64(range_end))
-                    w_x = map_unit_to_window(u_x, 0.0, canvas_width)
-                    (l_x, l_y) = map_window_to_local(w_x, w_y, canvas_pos)
-                    # if model.bug print(l_x, ",") end
+        # The sample value needs to be mapped
+        u_x = map_sample_to_unit(Float64(t), Float64(range_start), Float64(range_end))
+        u_y = map_sample_to_unit(s_y, data_samples.min, data_samples.max)
 
-                    CImGui.AddLine(draw_list,
-                    ImVec2(l_x, l_y), 
-                    ImVec2(l_x, l_y + SPIKE_HEIGHT), 
-                    YELLOW, LINE_THICKNESS)
-                end
+        w_x = map_unit_to_window(u_x, 0.0, canvas_width)
+        # graph space has +Y going down, but the data is oriented as +Y upward
+        # so we flip in unit-space.
+        u_y = 1.0 - u_y
+        w_y = map_unit_to_window(u_y, 0.0, canvas_height)
+        (l_x, l_y) = map_window_to_local(w_x, w_y, canvas_pos)
 
-                # if model.bug println("vt: ", vt) end
-            end
+        CImGui.AddLine(draw_list,
+            ImVec2(pl_x, pl_y), ImVec2(l_x, l_y), 
+            ORANGE, LINE_THICKNESS)
 
-            # Update row/y value and offset by a few pixels
-            w_y += SPIKE_HEIGHT + SPIKE_ROW_OFFSET
-        end
+        # if model.bug println("vt: ", vt) end
+        pl_x = l_x
+        pl_y = l_y
     end
 
+    # if model.bug print(l_x, ",") end
     # model.bug = false
-
-    # ------------------------------------------------------------------------
-    # Render stimulus spikes
-    # ------------------------------------------------------------------------
-    if graph.show_stimulus_data
-        w_y = 1.0 # Offset from border. 0 is underneath it.
-
-        # A span is a collection of rows (aka synapses)
-        for id in 1:synapses
-            # Narrow down to a single row by id
-            synaptic_samples = samples.stimulus_samples[id, :]
-            # if model.bug println("synaptic_samples: ", synaptic_samples) end
-
-            # Iterate samples with the defined range.
-            for t in range_start:range_end
-                if synaptic_samples[t] == 1 # A spike = 1
-                    # The sample value needs to be mapped
-                    u_x = map_sample_to_unit(Float64(t), Float64(range_start), Float64(range_end))
-                    w_x = map_unit_to_window(u_x, 0.0, canvas_width)
-                    (l_x, l_y) = map_window_to_local(w_x, w_y, canvas_pos)
-
-                    CImGui.AddLine(draw_list,
-                    ImVec2(l_x, l_y), 
-                    ImVec2(l_x, l_y + SPIKE_HEIGHT), 
-                    LIME_GREEN, LINE_THICKNESS)
-                end
-
-            end
-
-            # Update row/y value and offset by a few pixels
-            w_y += SPIKE_HEIGHT + SPIKE_ROW_OFFSET
-        end
-    end
-
+    CImGui.AddText(draw_list, ImVec2(5 + canvas_pos.x, 3 + canvas_pos.y), WHITE_TRAN, @sprintf("%3.3f", data_samples.max))
+    CImGui.AddText(draw_list, ImVec2(5 + canvas_pos.x, canvas_pos.y + canvas_size.y - 20), WHITE_TRAN, @sprintf("%3.3f", data_samples.min))
+    
     CImGui.PopClipRect(draw_list)
 
 end
 # if model.bug print("") end
 
-function draw_graph(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Model.ModelData, samples::Model.Samples)
+function draw_graph(graph::SomaAPFastGraph, gui_data::Gui.GuiData, model::Model.ModelData, samples::Model.Samples)
     draw_list = CImGui.GetWindowDrawList()
     canvas_pos = CImGui.GetCursorScreenPos()            # ImDrawList API uses screen coordinates!
     canvas_size = CImGui.GetContentRegionAvail()        # resize canvas to what's available
@@ -297,6 +218,9 @@ function draw_graph(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Mode
         ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y),
         IM_COL32(GRAY, GRAY, GRAY, 255), IM_COL32(GRAY, GRAY, GRAY, 255),
         IM_COL32(GRAY, GRAY, GRAY, 255), IM_COL32(GRAY, GRAY, GRAY, 255))
+
+    # CImGui.Text(@sprintf("hello"))
+
     if CImGui.IsItemHovered()
         CImGui.BeginTooltip()
         CImGui.Text(@sprintf("%d", graph.time_pos))
@@ -307,14 +231,13 @@ function draw_graph(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Mode
         ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y),
         IM_COL32(128, 128, 128, 255))
 
-
-    draw_spikes(graph, gui_data, draw_list, canvas_pos, canvas_size, model, samples)
+    draw_data(graph, gui_data, draw_list, canvas_pos, canvas_size, model, samples)
 end
 
-function draw(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Model.ModelData, samples::Model.Samples)
+function draw(graph::SomaAPFastGraph, gui_data::Gui.GuiData, model::Model.ModelData, samples::Model.Samples)
     CImGui.SetNextWindowSize((WINDOW_WIDTH, WINDOW_HEIGHT), CImGui.ImGuiCond_Always)
 
-    CImGui.Begin("Spike Graph")
+    CImGui.Begin("Soma apFast Graph")
     
     draw_header(graph, gui_data, model)
 

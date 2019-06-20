@@ -8,9 +8,35 @@ using Printf
 #  1 |   ||     |   | |       ||     |
 #  2   |   |   | |     ||     |    |
 #  3  |    |    |         | |   |     |
-#  where "|" = 1s
+#  where "|" = spikes
 
 const SpanArray = Array{UInt8,2}
+
+# For 1D float array streams.
+mutable struct SampleData{T <: Number}
+    samples::Array{T,1}
+    min::Float64
+    max::Float64
+    t::Int64
+
+    function SampleData{T}() where {T <: Number}
+        o = new()
+        o.t = 1
+        o
+    end
+end
+
+function config_sample_data!(data::SampleData{T}, length::Int64) where {T <: Number}
+    data.samples = Array{T}(undef, length)
+    reset_sample_data!(data)
+end
+
+function reset_sample_data!(data::SampleData{T}) where {T <: Number}
+    fill!(data.samples, 0)
+    data.t = 1
+    data.min = typemax(Float64)
+    data.max = typemin(Float64)
+end
 
 mutable struct Samples
     # -_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_--
@@ -23,18 +49,18 @@ mutable struct Samples
 
     stimulus_samples::SpanArray
 
-    cell_samples::Array{UInt8,1}
-    soma_apFast_samples::Array{Float64,1}
+    cell_samples::SampleData
+    soma_apFast_samples::SampleData
 
     # State managment during simulation run and between spans.
     # Start index of each span
     poi_t::Int64
     stim_t::Int64
-    cell_t::Int64
-    soma_apFast_t::Int64
 
     function Samples()
         o = new()
+        o.cell_samples = SampleData{UInt8}()
+        o.soma_apFast_samples = SampleData{Float64}()
         o
     end
 end
@@ -46,14 +72,9 @@ function config_samples!(samples::Samples, synapses::Int64, length::Int64)
 
     samples.stimulus_samples = zeros(UInt8, synapses, length)
     samples.stim_t = 1
-    
-    samples.cell_samples = Array{UInt8}(undef, length)
-    fill!(samples.cell_samples, 0)
-    samples.cell_t = 1
 
-    samples.soma_apFast_samples = Array{Float64}(undef, length)
-    fill!(samples.soma_apFast_samples, 0.0)
-    samples.soma_apFast_t = 1
+    config_sample_data!(samples.cell_samples, length)
+    config_sample_data!(samples.soma_apFast_samples, length)
 end
 
 function reset_samples!(samples::Samples)
@@ -63,11 +84,8 @@ function reset_samples!(samples::Samples)
     fill!(samples.stimulus_samples, 0)
     samples.stim_t = 1
 
-    fill!(samples.cell_samples, 0)
-    samples.cell_t = 1
-
-    fill!(samples.soma_apFast_samples, 0.0)
-    samples.soma_apFast_t = 1
+    reset_sample_data!(samples.cell_samples)
+    reset_sample_data!(samples.soma_apFast_samples)
 end
 
 # Write out samples (aka the current span) to storage.
@@ -154,6 +172,12 @@ function write_samples_out(samples::Array, file::String, model::ModelData, write
     end
 end
 
+function write_samples_out(data::SampleData, file::String, model::ModelData, writer)
+    open(file, "w") do f
+        writer(data.samples, model, f)
+    end
+end
+
 # ---------------------------------------------------------------------------
 # Stores
 # ---------------------------------------------------------------------------
@@ -168,17 +192,16 @@ end
 
 # The cell's spike output (aka post spike)
 function store_cell_sample!(samples::Samples, value::UInt8, t::Int64)
-    samples.cell_samples[t] = value
+    samples.cell_samples.samples[t] = value
 end
 
 function store_apFast_sample!(samples::Samples, value::Float64, t::Int64)
-    samples.soma_apFast_samples[t] = value
+    samples.soma_apFast_samples.samples[t] = value
 end
 
 # ---------------------------------------------------------------------------
 # Loads and Reads
 # ---------------------------------------------------------------------------
-
 function load_samples(samples::Samples, model::ModelData)
     spans = Model.spans(model)
 
@@ -190,7 +213,15 @@ function load_samples(samples::Samples, model::ModelData)
     for span in 1:spans
         read_poi_samples(samples, model, span)
         read_stimulus_samples(samples, model, span)
+        read_soma_apFast_samples(samples, model, span)
     end
+end
+
+# Called from client/handlers.jl
+function read_samples(samples::Samples, model::ModelData, span::Int64)
+    read_poi_samples(samples, model, span)
+    read_stimulus_samples(samples, model, span)
+    read_soma_apFast_samples(samples, model, span)
 end
 
 # Read span and put spikes into poi_samples collection.
@@ -286,3 +317,40 @@ function read_stimulus_samples(samples::Samples, model::ModelData, span::Int64)
     samples.stim_t += span_time
 end
 
+function read_soma_apFast_samples(samples::Samples, model::ModelData, span::Int64)
+    # Where to access fresh samples
+    path = Model.data_output_path(model)
+
+    # source file.
+    file = path * Model.output_soma_apFast(model) * string(span) * ".data"
+
+    synapses = Model.synapses(model)
+    span_time = Model.span_time(model)
+
+    # println("Loading apFast samples: ", file)
+
+    data_sams = samples.soma_apFast_samples
+
+    # Load samples
+    open(file, "r") do f
+        data = readlines(f)
+        t = data_sams.t
+        for sample in data
+            # Format:
+            # float
+            # float
+            # ...
+            v = parse(Float64, sample)
+            data_sams.min = min(data_sams.min, v)
+            data_sams.max = max(data_sams.max, v)
+
+            data_sams.samples[t] = v
+            t += 1
+        end
+    end
+    
+    # println("min: ", data_sams.min, ", max: ", data_sams.max)
+    # Prepare for next span my moving "t" to the start of the next span
+    # position within the full duration of samples.
+    data_sams.t += span_time
+end
