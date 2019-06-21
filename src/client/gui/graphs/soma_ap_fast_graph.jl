@@ -46,9 +46,6 @@ function draw_header(graph::SomaAPFastGraph, gui_data::Gui.GuiData, model::Model
     end
 end
 
-const WINDOW_WIDTH = 1000
-const WINDOW_HEIGHT = 300
-
 function draw_data(graph::SomaAPFastGraph, gui_data::Gui.GuiData,
     draw_list::Ptr{CImGui.LibCImGui.ImDrawList},
     canvas_pos::CImGui.LibCImGui.ImVec2, canvas_size::CImGui.LibCImGui.ImVec2,
@@ -173,7 +170,7 @@ function draw_data(graph::SomaAPFastGraph, gui_data::Gui.GuiData,
         u_y = map_sample_to_unit(s_y, data_samples.min, data_samples.max)
 
         w_x = map_unit_to_window(u_x, 0.0, canvas_width)
-        # graph space has +Y going down, but the data is oriented as +Y upward
+        # graph space has +Y downward, but the data is oriented as +Y upward
         # so we flip in unit-space.
         u_y = 1.0 - u_y
         w_y = map_unit_to_window(u_y, 0.0, canvas_height)
@@ -190,6 +187,7 @@ function draw_data(graph::SomaAPFastGraph, gui_data::Gui.GuiData,
 
     # if model.bug print(l_x, ",") end
     # model.bug = false
+    # Show the min/max values of the data.
     CImGui.AddText(draw_list, ImVec2(5 + canvas_pos.x, 3 + canvas_pos.y), WHITE_TRAN, @sprintf("%3.3f", data_samples.max))
     CImGui.AddText(draw_list, ImVec2(5 + canvas_pos.x, canvas_pos.y + canvas_size.y - 20), WHITE_TRAN, @sprintf("%3.3f", data_samples.min))
     
@@ -235,6 +233,7 @@ function draw_graph(graph::SomaAPFastGraph, gui_data::Gui.GuiData, model::Model.
 end
 
 function draw(graph::SomaAPFastGraph, gui_data::Gui.GuiData, model::Model.ModelData, samples::Model.Samples)
+    CImGui.SetNextWindowPos((0, 25 + WINDOW_HEIGHT), CImGui.ImGuiCond_Once)
     CImGui.SetNextWindowSize((WINDOW_WIDTH, WINDOW_HEIGHT), CImGui.ImGuiCond_Always)
 
     CImGui.Begin("Soma apFast Graph")

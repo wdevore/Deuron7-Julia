@@ -26,7 +26,6 @@ function draw_main_panel(gui_data::GuiData, app_data::Model.AppData, sock::Comm.
         # Try to load any samples based on model properties.
         # The samples are split into "span"s. They are either in RamDisk or disc.
         Model.load_samples(app_data.samples, app_data.model)
-
     end
     CImGui.SameLine()
 
@@ -61,11 +60,18 @@ function draw_main_panel(gui_data::GuiData, app_data::Model.AppData, sock::Comm.
             data["Data1"] = Model.simulation(app_data.model)
 
             if Model.is_changed(app_data.model)
+                println("Model has changed")
                 # Save changes
                 if Model.is_app_changed(app_data.model)
+                    println("App Model has changed")
                     Model.save_data(app_data)
                 end
-                Model.load_sim!(app_data.model)
+                if Model.is_sim_changed(app_data.model)
+                    println("Sim Model has changed")
+                    Model.save_sim(app_data.model)
+                end
+
+                # Model.load_sim!(app_data.model)
                 Model.config!(app_data)
             end
     

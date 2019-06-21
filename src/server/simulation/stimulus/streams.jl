@@ -100,7 +100,7 @@ function config_stimulus_streams!(streams::Streams, model::Model.ModelData)
 
     add_stimulus_stream!(streams, stream)
 
-    frequency = Model.frequency(model)
+    frequency = Model.hertz(model)
 
     Simulation.load!(stream, data_file, frequency)
 end

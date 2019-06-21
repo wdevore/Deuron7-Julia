@@ -13,14 +13,14 @@ function draw_simulation_panel(gui_data::GuiData, app_data::Model.AppData, sock:
             # range = findfirst("\0", app.buffer)
             # value = String(SubString(app.buffer, 1:(range[1] - 1)))
             # Model.set_duration!(app.model, value)
-            Model.set_stimulus_scaler!(data.model, gui_data.buffer)
+            Model.set_stimulus_scaler!(app_data.model, gui_data.buffer)
         end
         CImGui.SameLine(300)
 
         gui_data.buffer = Model.prep_field(Model.hertz(app_data.model), 16)
         returned = CImGui.InputText("Hertz (ISI)", gui_data.buffer, 16, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
         if returned
-            Model.set_hertz!(data.model, gui_data.buffer)
+            Model.set_hertz!(app_data.model, gui_data.buffer)
         end
 
         CImGui.PopItemWidth()

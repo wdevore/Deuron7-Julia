@@ -15,8 +15,11 @@ using CImGui.GLFWBackend
 using CImGui.OpenGLBackend
 using CImGui.GLFWBackend.GLFW
 using CImGui.OpenGLBackend.ModernGL
-using CImGui: ImVec2, ImVec4, IM_COL32, ImU32, ImColor, ImColor_ImColorFloat
+using CImGui: ImVec2, ImVec4, IM_COL32, ImU32, ImColor
 using Printf
+
+const WINDOW_WIDTH = 1500
+const WINDOW_HEIGHT = 200
 
 const MAX_VERTICAL_BARS = 250
 const LINE_THICKNESS = 1.0

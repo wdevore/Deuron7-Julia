@@ -91,8 +91,6 @@ function draw_header(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Mod
     end
 end
 
-const WINDOW_WIDTH = 1000
-const WINDOW_HEIGHT = 300
 const SPIKE_ROW_OFFSET = 2 # Adds a gap between rows
 const SPIKE_HEIGHT = 10
 
@@ -312,6 +310,7 @@ function draw_graph(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Mode
 end
 
 function draw(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Model.ModelData, samples::Model.Samples)
+    CImGui.SetNextWindowPos((0, 25), CImGui.ImGuiCond_Once)
     CImGui.SetNextWindowSize((WINDOW_WIDTH, WINDOW_HEIGHT), CImGui.ImGuiCond_Always)
 
     CImGui.Begin("Spike Graph")

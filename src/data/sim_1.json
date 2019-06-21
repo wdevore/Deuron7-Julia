@@ -2,8 +2,9 @@
   "Synapses": 10,
   "ActiveSynapse": 1,
   "Poisson_Pattern_spread": 50,
-  "Poisson_Pattern_min": 50,
-  "Firing_Rate": 0.005,
+  "PercentOfExcititorySynapses": 80.0,
+  "Hertz": 10,
+  "Firing_Rate": 0.001,
   "Neuron": {
     "ntao": 10,
     "Dendrites": {
@@ -23,8 +24,8 @@
               "amb": 10.8,
               "w": 5.669624142019883,
               "alpha": 1.05,
-              "learningRateFast": 0.32,
               "learningRateSlow": 0.21,
+              "learningRateFast": 0.32,
               "taoI": 10,
               "ama": 1.2
             },
@@ -38,8 +39,8 @@
               "amb": 10.8,
               "w": 5.492410587389879,
               "alpha": 1.05,
-              "learningRateFast": 0.32,
               "learningRateSlow": 0.21,
+              "learningRateFast": 0.32,
               "taoI": 10,
               "ama": 1.2
             },
@@ -53,8 +54,8 @@
               "amb": 10.8,
               "w": 4.073732643872951,
               "alpha": 1.05,
-              "learningRateFast": 0.32,
               "learningRateSlow": 0.21,
+              "learningRateFast": 0.32,
               "taoI": 10,
               "ama": 1.2
             },
@@ -68,8 +69,8 @@
               "amb": 10.8,
               "w": 5.160789970915915,
               "alpha": 1.05,
-              "learningRateFast": 0.32,
               "learningRateSlow": 0.21,
+              "learningRateFast": 0.32,
               "taoI": 10,
               "ama": 1.2
             },
@@ -83,8 +84,8 @@
               "amb": 10.8,
               "w": 5.731691037095932,
               "alpha": 1.05,
-              "learningRateFast": 0.32,
               "learningRateSlow": 0.21,
+              "learningRateFast": 0.32,
               "taoI": 10,
               "ama": 1.2
             },
@@ -98,8 +99,8 @@
               "amb": 10.8,
               "w": 5.804510126206627,
               "alpha": 1.05,
-              "learningRateFast": 0.32,
               "learningRateSlow": 0.21,
+              "learningRateFast": 0.32,
               "taoI": 10,
               "ama": 1.2
             },
@@ -113,8 +114,8 @@
               "amb": 10.8,
               "w": 3.873498345854093,
               "alpha": 1.05,
-              "learningRateFast": 0.32,
               "learningRateSlow": 0.21,
+              "learningRateFast": 0.32,
               "taoI": 10,
               "ama": 1.2
             },
@@ -128,8 +129,8 @@
               "amb": 10.8,
               "w": 5.338135529575374,
               "alpha": 1.05,
-              "learningRateFast": 0.32,
               "learningRateSlow": 0.21,
+              "learningRateFast": 0.32,
               "taoI": 10,
               "ama": 1.2
             },
@@ -143,8 +144,8 @@
               "amb": 10.8,
               "w": 5.445666856215287,
               "alpha": 1.05,
-              "learningRateFast": 0.32,
               "learningRateSlow": 0.21,
+              "learningRateFast": 0.32,
               "taoI": 10,
               "ama": 1.2
             },
@@ -158,14 +159,14 @@
               "amb": 10.8,
               "w": 5.676068003255829,
               "alpha": 1.05,
-              "learningRateFast": 0.32,
               "learningRateSlow": 0.21,
+              "learningRateFast": 0.32,
               "taoI": 10,
               "ama": 1.2
             }
           ],
-          "id": 0,
           "WeightMax": 10.0,
+          "id": 0,
           "WeightDivisor": 2.0
         }
       ]
@@ -181,8 +182,7 @@
     "RefractoryPeriod": 3,
     "nSlowSurge": 8
   },
-  "StimulusScaler": 9,
-  "Hertz": 20,
   "Poisson_Pattern_max": 300,
-  "PercentOfExcititorySynapses": 80.0
+  "Poisson_Pattern_min": 50,
+  "StimulusScaler": 9
 }
