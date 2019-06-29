@@ -152,10 +152,6 @@ function integrate!(soma::AbstractSoma, t::Int64)
 	# Collecting is centralized in streams.jl for consistency.
    	collect!(soma.samples, soma, t)
 
-	# samples.Sim.NeuronPspSamples.Put(t, psp, n.id, 0)
-	# samples.Sim.NeuronAPSamples.Put(t, soma.apFast, soma.id, 0)
-	# samples.Sim.NeuronAPSlowSamples.Put(t, soma.apSlow, soma.id, 0)
-
    	output(soma.axon)
 end
 

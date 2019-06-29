@@ -33,8 +33,8 @@ mutable struct ModelData
         o.threshold = "\0"^16
         o.loaded = false
         o.bug = true
-        o.sim_changed = true
-        o.app_changed = true
+        o.sim_changed = false
+        o.app_changed = false
         o.sim_data_loaded = false
         o.app_data_loaded = false
         o
@@ -75,16 +75,20 @@ function save(model::ModelData, file::String)
 end
 
 function is_loaded(model::ModelData)
+    model.sim_data_loaded
+end
+
+function is_sim_loaded(model::ModelData)
     model.loaded = model.app_data_loaded && model.sim_data_loaded
     model.loaded
 end
 
 function is_app_changed(model::ModelData)
-    model.sim_changed
+    model.app_changed
 end
 
 function is_sim_changed(model::ModelData)
-    model.app_changed
+    model.sim_changed
 end
 
 function is_changed(model::ModelData)
@@ -95,7 +99,7 @@ function load_sim!(model::ModelData)
     sim = simulation(model)
     path = data_path(model)
     file = path * sim
-    println("Loading sim model: ", file)
+    println("Loading sim model... ", file)
 
 
     # json = open(file) do fd
@@ -145,6 +149,7 @@ function load_sim!(model::ModelData)
     model.synapses = model.compartment["Synapses"]
     model.synapse = model.synapses[model.active_synapse]
 
+    println("Sim model loaded")
     model.sim_data_loaded = true;
 end
 
@@ -160,11 +165,12 @@ end
 
 function set_changed(model::ModelData, what::Int64)
     if what == 0
-        # print_trace(stacktrace(), "")
         # println("App data changed")
+        # print_trace(stacktrace(), "")
         model.app_changed = true
     elseif what == 1
         # println("Sim data changed")
+        # print_trace(stacktrace(), "")
         model.sim_changed = true
     end
 end
@@ -297,14 +303,6 @@ function set_time_scale!(model::ModelData, v::Int64)
     set_changed(model, 0)
 end
 
-# function frequency(model::ModelData)
-#     model.data["Frequency"]
-# end
-# function set_frequency!(model::ModelData, v::Int64)
-#     model.data["Frequency"] = v
-#     set_changed(model, 0)
-# end
-
 function data_output_path(model::ModelData)
     model.data["DataOutputPath"]
 end
@@ -356,6 +354,15 @@ end
 function set_output_soma_apFast!(model::ModelData, v::String)
     v = strip_null(v)
     model.data["OutputSomaAPFastFiles"] = v
+    set_changed(model, 0)
+end
+
+function output_soma_apSlow(model::ModelData)
+    model.data["OutputSomaAPSlowFiles"]
+end
+function set_output_soma_apSlow!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.data["OutputSomaAPSlowFiles"] = v
     set_changed(model, 0)
 end
 

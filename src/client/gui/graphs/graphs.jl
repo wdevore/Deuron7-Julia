@@ -18,7 +18,9 @@ using CImGui.OpenGLBackend.ModernGL
 using CImGui: ImVec2, ImVec4, IM_COL32, ImU32, ImColor
 using Printf
 
-const WINDOW_WIDTH = 1500
+using ..Gui
+
+const WINDOW_WIDTH = Gui.GUI_WIDTH - 10
 const WINDOW_HEIGHT = 200
 
 const MAX_VERTICAL_BARS = 250
@@ -79,8 +81,10 @@ end
 
 include("spike_scatter_graph.jl")
 include("soma_ap_fast_graph.jl")
+include("soma_ap_slow_graph.jl")
 
 spikes_graph = Graphs.SpikeScatterGraph()
 soma_apFast_graph = Graphs.SomaAPFastGraph()
+soma_apSlow_graph = Graphs.SomaAPSlowGraph()
 
 end # Module ---------------------------------------

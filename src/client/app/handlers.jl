@@ -55,6 +55,14 @@ function handle_simulation_to_client(data::Dict{String,Any})
     elseif data["Type"] == "Status"
         if data["Data"] == "Span Completed"
             # The simulation on the server completed a span
+
+            # First check that the sim model has been loaded. We need properties
+            # settings from the model to properly perform loading.
+            if !Model.is_loaded(app_data.model)
+                Model.load_sim!(app_data.model)
+                Model.config_samples!(app_data.samples, app_data.model)
+            end
+
             # Read span into Samples for both poisson and stimulus
             span = data["Data2"]
             Model.read_samples(app_data.samples, app_data.model, span) 

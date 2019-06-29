@@ -20,7 +20,7 @@ function draw_main_panel(gui_data::GuiData, app_data::Model.AppData, sock::Comm.
 
     # Button bar ************************************************
     if CImGui.Button("Load Sim")
-        # load simulation data
+        # load simulation data1
         Model.load_sim!(app_data.model)
         
         # Try to load any samples based on model properties.

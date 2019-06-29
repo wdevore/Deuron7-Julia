@@ -148,4 +148,10 @@ end
 function collect!(samples::Model.Samples, soma::AbstractSoma, t::Int64)
     # Capture soma data
     Model.store_apFast_sample!(samples, soma.apFast, t)
+
+    Model.store_apSlow_sample!(samples, soma.apSlow, t)
+
+    # samples.Sim.NeuronPspSamples.Put(t, psp, n.id, 0)
+	# samples.Sim.NeuronAPSlowSamples.Put(t, soma.apSlow, soma.id, 0)
+
 end

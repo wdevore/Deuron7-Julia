@@ -17,7 +17,7 @@ mutable struct GuiData
 
         o.buffer = ""
 
-        o.window = GLFW.CreateWindow(WIDTH, HEIGHT, "Deuron7")
+        o.window = GLFW.CreateWindow(GUI_WIDTH, GUI_HEIGHT, "Deuron7")
         @assert o.window != C_NULL
         GLFW.MakeContextCurrent(o.window)
         GLFW.SwapInterval(1)  # enable vsync

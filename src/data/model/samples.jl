@@ -51,6 +51,7 @@ mutable struct Samples
 
     cell_samples::SampleData
     soma_apFast_samples::SampleData
+    soma_apSlow_samples::SampleData
 
     # State managment during simulation run and between spans.
     # Start index of each span
@@ -61,6 +62,7 @@ mutable struct Samples
         o = new()
         o.cell_samples = SampleData{UInt8}()
         o.soma_apFast_samples = SampleData{Float64}()
+        o.soma_apSlow_samples = SampleData{Float64}()
         o
     end
 end
@@ -75,6 +77,7 @@ function config_samples!(samples::Samples, synapses::Int64, length::Int64)
 
     config_sample_data!(samples.cell_samples, length)
     config_sample_data!(samples.soma_apFast_samples, length)
+    config_sample_data!(samples.soma_apSlow_samples, length)
 end
 
 function reset_samples!(samples::Samples)
@@ -86,6 +89,7 @@ function reset_samples!(samples::Samples)
 
     reset_sample_data!(samples.cell_samples)
     reset_sample_data!(samples.soma_apFast_samples)
+    reset_sample_data!(samples.soma_apSlow_samples)
 end
 
 # Write out samples (aka the current span) to storage.
@@ -102,7 +106,10 @@ function write_samples!(samples::Samples, model::ModelData, span::Int64)
     write_samples_out(samples.cell_samples, file, model, cell_samples_writer)
 
     file = path * Model.output_soma_apFast(model) * string(span) * ".data"
-    write_samples_out(samples.soma_apFast_samples, file, model, soma_apFast_samples_writer)
+    write_samples_out(samples.soma_apFast_samples, file, model, float_samples_writer)
+
+    file = path * Model.output_soma_apSlow(model) * string(span) * ".data"
+    write_samples_out(samples.soma_apSlow_samples, file, model, float_samples_writer)
 end
 
 # ---------------------------------------------------------------------------
@@ -150,16 +157,14 @@ function cell_samples_writer(samples::Array{UInt8,1}, model::ModelData, f::IOStr
     println(f, "::")
 end
 
-function soma_apFast_samples_writer(samples::Array{Float64,1}, model::ModelData, f::IOStream)
+function float_samples_writer(samples::Array{Float64,1}, model::ModelData, f::IOStream)
     span_time = Model.span_time(model)
 
-    # Now write each stream/synpase-input
     # Format:
     # float
     # float
     # ...
 
-    # write all spikes (1) and non-spikes (0)
     for t in 1:span_time
         println(f, samples[t])
     end
@@ -199,21 +204,34 @@ function store_apFast_sample!(samples::Samples, value::Float64, t::Int64)
     samples.soma_apFast_samples.samples[t] = value
 end
 
+function store_apSlow_sample!(samples::Samples, value::Float64, t::Int64)
+    samples.soma_apSlow_samples.samples[t] = value
+end
+
 # ---------------------------------------------------------------------------
 # Loads and Reads
 # ---------------------------------------------------------------------------
-function load_samples(samples::Samples, model::ModelData)
-    spans = Model.spans(model)
-
+function config_samples!(samples::Samples, model::ModelData)
     synapses = Model.synapses(model)
     duration = Model.duration(model)
 
     config_samples!(samples, synapses, duration)
+end
+
+function load_samples(samples::Samples, model::ModelData)
+    spans = Model.spans(model)
+
+    config_samples!(samples, model)
+    path = Model.data_output_path(model)
 
     for span in 1:spans
         read_poi_samples(samples, model, span)
         read_stimulus_samples(samples, model, span)
-        read_soma_apFast_samples(samples, model, span)
+
+        file = path * Model.output_soma_apFast(model) * string(span) * ".data"
+        read_float_samples(samples.soma_apFast_samples, model, file, span)
+        file = path * Model.output_soma_apSlow(model) * string(span) * ".data"
+        read_float_samples(samples.soma_apSlow_samples, model, file, span)
     end
 end
 
@@ -221,7 +239,15 @@ end
 function read_samples(samples::Samples, model::ModelData, span::Int64)
     read_poi_samples(samples, model, span)
     read_stimulus_samples(samples, model, span)
-    read_soma_apFast_samples(samples, model, span)
+
+    # Where to access fresh samples
+    path = Model.data_output_path(model)
+
+    file = path * Model.output_soma_apFast(model) * string(span) * ".data"
+    read_float_samples(samples.soma_apFast_samples, model, file, span)
+
+    file = path * Model.output_soma_apSlow(model) * string(span) * ".data"
+    read_float_samples(samples.soma_apSlow_samples, model, file, span)
 end
 
 # Read span and put spikes into poi_samples collection.
@@ -317,19 +343,11 @@ function read_stimulus_samples(samples::Samples, model::ModelData, span::Int64)
     samples.stim_t += span_time
 end
 
-function read_soma_apFast_samples(samples::Samples, model::ModelData, span::Int64)
-    # Where to access fresh samples
-    path = Model.data_output_path(model)
-
-    # source file.
-    file = path * Model.output_soma_apFast(model) * string(span) * ".data"
-
+function read_float_samples(data_sams::SampleData, model::ModelData, file::String, span::Int64)
     synapses = Model.synapses(model)
     span_time = Model.span_time(model)
 
     # println("Loading apFast samples: ", file)
-
-    data_sams = samples.soma_apFast_samples
 
     # Load samples
     open(file, "r") do f
@@ -354,3 +372,41 @@ function read_soma_apFast_samples(samples::Samples, model::ModelData, span::Int6
     # position within the full duration of samples.
     data_sams.t += span_time
 end
+
+# function read_soma_apFast_samples(samples::Samples, model::ModelData, span::Int64)
+#     # Where to access fresh samples
+#     path = Model.data_output_path(model)
+
+#     # source file.
+#     file = path * Model.output_soma_apFast(model) * string(span) * ".data"
+
+#     synapses = Model.synapses(model)
+#     span_time = Model.span_time(model)
+
+#     # println("Loading apFast samples: ", file)
+
+#     data_sams = samples.soma_apFast_samples
+
+#     # Load samples
+#     open(file, "r") do f
+#         data = readlines(f)
+#         t = data_sams.t
+#         for sample in data
+#             # Format:
+#             # float
+#             # float
+#             # ...
+#             v = parse(Float64, sample)
+#             data_sams.min = min(data_sams.min, v)
+#             data_sams.max = max(data_sams.max, v)
+
+#             data_sams.samples[t] = v
+#             t += 1
+#         end
+#     end
+    
+#     # println("min: ", data_sams.min, ", max: ", data_sams.max)
+#     # Prepare for next span my moving "t" to the start of the next span
+#     # position within the full duration of samples.
+#     data_sams.t += span_time
+# end

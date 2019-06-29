@@ -12,8 +12,8 @@ using Printf
 using JSON
 
 const DISPLAY_RATIO = 16.0 / 9.0
-const WIDTH = 1024 + 512
-const HEIGHT = UInt32(Float64(WIDTH) / DISPLAY_RATIO)
+const GUI_WIDTH = 1024 * 2 + 512 * 2
+const GUI_HEIGHT = UInt32(Float64(GUI_WIDTH) / DISPLAY_RATIO)
 
 using ..Model
 
@@ -36,9 +36,12 @@ function run(gui_data::GuiData, app_data::Model.AppData, sock::Comm.SocClient)
 
         draw_main_panel(gui_data, app_data, sock)
 
+        # Graph rendering -----------------------------------------------------------
         Graphs.draw(Graphs.spikes_graph, gui_data::GuiData, app_data.model, app_data.samples)
 
         Graphs.draw(Graphs.soma_apFast_graph, gui_data::GuiData, app_data.model, app_data.samples)
+        Graphs.draw(Graphs.soma_apSlow_graph, gui_data::GuiData, app_data.model, app_data.samples)
+        # ----------------------------------------------------------------------------
 
         end_render(gui_data)
     
