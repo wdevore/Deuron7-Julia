@@ -140,10 +140,10 @@ function collect!(streams::Streams, samples::Model.Samples, t::Int64)
     end
 end
 
-function collect!(samples::Model.Samples, cell::AbstractBitStream, t::Int64)
-    # Capture the cell's current output spike
-    Model.store_cell_sample!(samples, Simulation.output(cell), t)
-end
+# function collect!(samples::Model.Samples, cell::AbstractBitStream, t::Int64)
+#     # Capture the cell's current output spike
+#     Model.store_cell_sample!(samples, Simulation.output(cell), t)
+# end
 
 function collect!(samples::Model.Samples, soma::AbstractSoma, t::Int64)
     # Capture soma data
@@ -151,7 +151,5 @@ function collect!(samples::Model.Samples, soma::AbstractSoma, t::Int64)
 
     Model.store_apSlow_sample!(samples, soma.apSlow, t)
 
-    # samples.Sim.NeuronPspSamples.Put(t, psp, n.id, 0)
-	# samples.Sim.NeuronAPSlowSamples.Put(t, soma.apSlow, soma.id, 0)
-
+    Model.store_cell_sample!(samples, output(soma.axon), t)
 end

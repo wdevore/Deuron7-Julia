@@ -63,7 +63,6 @@ function simulate(chan::Channel{String},
             # Collecting is centralized in streams.jl for consistency.
             # Collect all data for analysis by client.
             collect!(streams, samples, t)
-            collect!(samples, cell, t)
 
             # Exercise all stimulus which means all merger streams.
             # This causes each stream to update and move its internal value to its output.

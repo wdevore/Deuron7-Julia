@@ -17,12 +17,7 @@ using ..Gui
 #
 # Only the X-axis is mapped Y is simply a height is graph-space.
 #
-# The graph shows only a few spans at any one time.
-# |<------------------------------ Duration --------------------------->|
-# |<--- Span ---><--- Span ---><--- Span ---><--- Span ---><--- Span --->
-# |              |<-------------- Graph view -------------|
-#
-# The graph only shows up to 3 spans at a time.
+# This graph also shows the Neuron's Post spike (i.e. the output of the neuron)
 
 mutable struct SpikeScatterGraph <: AbstractGraph
     show_vertical_t_bar_markers::Bool
@@ -93,13 +88,13 @@ end
 
 const SPIKE_ROW_OFFSET = 2 # Adds a gap between rows
 const SPIKE_HEIGHT = 10
+const CELL_SPIKE_HEIGHT = 30
+const CELL_LINE_THICKNESS = 2.0
 
 function draw_spikes(graph::SpikeScatterGraph, gui_data::Gui.GuiData,
     draw_list::Ptr{CImGui.LibCImGui.ImDrawList},
     canvas_pos::CImGui.LibCImGui.ImVec2, canvas_size::CImGui.LibCImGui.ImVec2,
     model::Model.ModelData, samples::Model.Samples)
-    CImGui.PushClipRect(draw_list, canvas_pos, 
-        ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), true) # clip lines within the canvas (if we resize it, etc.)
 
     # We can't render anything until the model has been loaded
     # ALONG with the samples.
@@ -155,6 +150,8 @@ function draw_spikes(graph::SpikeScatterGraph, gui_data::Gui.GuiData,
     Model.set_range_start!(model, Int64(round(range_start)))
     Model.set_range_end!(model, Int64(round(range_end)))
     # ------------------------------------------------------------------------
+
+    CImGui.PushClipRect(draw_list, canvas_pos, ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), true) # clip lines within the canvas (if we resize it, etc.)
 
     # ------------------------------------------------------------------------
     # Mouse vertical tracking and markers
@@ -234,6 +231,7 @@ function draw_spikes(graph::SpikeScatterGraph, gui_data::Gui.GuiData,
             w_y += SPIKE_HEIGHT + SPIKE_ROW_OFFSET
         end
     end
+    # ------------------------------------------------------------------------
 
     # model.bug = false
 
@@ -262,7 +260,6 @@ function draw_spikes(graph::SpikeScatterGraph, gui_data::Gui.GuiData,
                     ImVec2(l_x, l_y + SPIKE_HEIGHT), 
                     LIME_GREEN, LINE_THICKNESS)
                 end
-
             end
 
             # Update row/y value and offset by a few pixels
@@ -270,8 +267,28 @@ function draw_spikes(graph::SpikeScatterGraph, gui_data::Gui.GuiData,
         end
     end
 
-    CImGui.PopClipRect(draw_list)
+    # ------------------------------------------------------------------------
+    # Render soma/cell spikes
+    # ------------------------------------------------------------------------
 
+    synaptic_samples = samples.cell_samples.samples
+
+    # Iterate samples with the defined range.
+    for t in range_start:range_end
+        if synaptic_samples[t] == 1 # A spike = 1
+            # The sample value needs to be mapped
+            u_x = map_sample_to_unit(Float64(t), Float64(range_start), Float64(range_end))
+            w_x = map_unit_to_window(u_x, 0.0, canvas_width)
+            (l_x, l_y) = map_window_to_local(w_x, w_y, canvas_pos)
+
+            CImGui.AddLine(draw_list,
+                ImVec2(l_x, l_y), 
+                ImVec2(l_x, l_y + CELL_SPIKE_HEIGHT), 
+                WHITE, CELL_LINE_THICKNESS)
+        end
+    end
+
+    CImGui.PopClipRect(draw_list)
 end
 # if model.bug print("") end
 
@@ -309,9 +326,10 @@ function draw_graph(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Mode
     draw_spikes(graph, gui_data, draw_list, canvas_pos, canvas_size, model, samples)
 end
 
-function draw(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Model.ModelData, samples::Model.Samples)
-    CImGui.SetNextWindowPos((0, 25), CImGui.ImGuiCond_Once)
-    CImGui.SetNextWindowSize((WINDOW_WIDTH, WINDOW_HEIGHT), CImGui.ImGuiCond_Always)
+function draw(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Model.ModelData, samples::Model.Samples, vert_pos::Int64)
+    # CImGui.SetNextWindowPos((0, 25), CImGui.ImGuiCond_Once)
+    CImGui.SetNextWindowPos((0, vert_pos), CImGui.ImGuiCond_Once)
+    CImGui.SetNextWindowSize((GRAPH_WINDOW_WIDTH, GRAPH_WINDOW_HEIGHT + 20), CImGui.ImGuiCond_Always)
 
     CImGui.Begin("Spike Graph")
     

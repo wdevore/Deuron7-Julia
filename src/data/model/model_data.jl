@@ -340,11 +340,11 @@ function set_source_stimulus!(model::ModelData, v::String)
 end
 
 function output_cell_spikes(model::ModelData)
-    model.data["OutputCellSpikeFiles"]
+    model.data["OutputSomaPSPFiles"]
 end
 function set_output_cell_spikes!(model::ModelData, v::String)
     v = strip_null(v)
-    model.data["OutputCellSpikeFiles"] = v
+    model.data["OutputSomaPSPFiles"] = v
     set_changed(model, 0)
 end
 
@@ -365,7 +365,6 @@ function set_output_soma_apSlow!(model::ModelData, v::String)
     model.data["OutputSomaAPSlowFiles"] = v
     set_changed(model, 0)
 end
-
 
 # --------------------------------------------------------------
 # Simulation Setter/Getters

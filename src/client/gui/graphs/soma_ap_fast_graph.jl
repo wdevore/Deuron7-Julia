@@ -232,9 +232,10 @@ function draw_graph(graph::SomaAPFastGraph, gui_data::Gui.GuiData, model::Model.
     draw_data(graph, gui_data, draw_list, canvas_pos, canvas_size, model, samples)
 end
 
-function draw(graph::SomaAPFastGraph, gui_data::Gui.GuiData, model::Model.ModelData, samples::Model.Samples)
-    CImGui.SetNextWindowPos((0, 25 + WINDOW_HEIGHT), CImGui.ImGuiCond_Once)
-    CImGui.SetNextWindowSize((WINDOW_WIDTH, WINDOW_HEIGHT), CImGui.ImGuiCond_Always)
+function draw(graph::SomaAPFastGraph, gui_data::Gui.GuiData, model::Model.ModelData, samples::Model.Samples, vert_pos::Int64)
+    # CImGui.SetNextWindowPos((0, 25 + WINDOW_HEIGHT), CImGui.ImGuiCond_Once)
+    CImGui.SetNextWindowPos((0, vert_pos), CImGui.ImGuiCond_Once)
+    CImGui.SetNextWindowSize((GRAPH_WINDOW_WIDTH, GRAPH_WINDOW_HEIGHT), CImGui.ImGuiCond_Always)
 
     CImGui.Begin("Soma apFast Graph")
     

@@ -35,12 +35,17 @@ function run(gui_data::GuiData, app_data::Model.AppData, sock::Comm.SocClient)
         begin_render()
 
         draw_main_panel(gui_data, app_data, sock)
+        vert_pos = 25
 
         # Graph rendering -----------------------------------------------------------
-        Graphs.draw(Graphs.spikes_graph, gui_data::GuiData, app_data.model, app_data.samples)
+        # Renders boths stimulus and cell output spikes.
+        Graphs.draw(Graphs.spikes_graph, gui_data::GuiData, app_data.model, app_data.samples, vert_pos)
 
-        Graphs.draw(Graphs.soma_apFast_graph, gui_data::GuiData, app_data.model, app_data.samples)
-        Graphs.draw(Graphs.soma_apSlow_graph, gui_data::GuiData, app_data.model, app_data.samples)
+        vert_pos += Graphs.GRAPH_WINDOW_HEIGHT + 20
+
+        Graphs.draw(Graphs.soma_apFast_graph, gui_data::GuiData, app_data.model, app_data.samples, vert_pos)
+        vert_pos += Graphs.GRAPH_WINDOW_HEIGHT
+        Graphs.draw(Graphs.soma_apSlow_graph, gui_data::GuiData, app_data.model, app_data.samples, vert_pos)
         # ----------------------------------------------------------------------------
 
         end_render(gui_data)
