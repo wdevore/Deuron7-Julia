@@ -7,6 +7,8 @@ mutable struct AppData
     # Samples holds all the sampled data in the sim or app.
     samples::Samples
 
+    configured::Bool
+
     function AppData()
         o = new()
 
@@ -14,7 +16,7 @@ mutable struct AppData
 
         o.basic_protocol = JSON.parsefile("../data/com_protocol_basic.json")
         o.samples = Samples()
-
+        o.configured = false
         o
     end
 end
@@ -24,6 +26,7 @@ function config!(data::AppData)
     duration = Model.duration(data.model)
 
     config_samples!(data.samples, synapses, duration)
+    data.configured = true
 end
 
 function samples(data::AppData)
@@ -35,5 +38,5 @@ function load_data!(data::AppData)
 end
 
 function save_data(data::AppData)
-    save(data.model, "../data/app.json")
+    Model.unload(data.model)
 end

@@ -39,7 +39,6 @@ if soc_client ≠ nothing
 
     Sockets.close(soc_client.socket)
 
-    println("Saving model")
     Model.save_data(app_data)
 
     println("Closing Gui")

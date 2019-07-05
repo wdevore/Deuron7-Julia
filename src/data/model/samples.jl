@@ -1,3 +1,7 @@
+# -----------------------------------------------------------
+# This file is included from model.jl
+# -----------------------------------------------------------
+
 # Samples handles both server and client side IO
 # The server stores data (aka samples) and the client reads them.
 
@@ -22,8 +26,21 @@ function reset_sample_data!(data::SampleData{T}) where {T <: Number}
     data.max = typemin(Float64)
 end
 
+function reset_sample_data!(syn_samples::SynapticSamples)
+    syn_samples.t = 1
+    for syn_id in 1:syn_samples.synapses
+        syn_data = syn_samples.data[syn_id]
+        fill!(syn_data.samples, 0)
+        syn_data.min = typemax(Float64)
+        syn_data.max = typemin(Float64)
+    end
+end
+
 # `length` is the length of a span.
+# `synapses` is the number of synapses
 function config_samples!(samples::Samples, synapses::Int64, length::Int64)
+    samples.synapses = synapses
+
     samples.poi_samples = zeros(UInt8, synapses, length)
     samples.poi_t = 1
 
@@ -33,6 +50,34 @@ function config_samples!(samples::Samples, synapses::Int64, length::Int64)
     config_sample_data!(samples.cell_samples, length)
     config_sample_data!(samples.soma_apFast_samples, length)
     config_sample_data!(samples.soma_apSlow_samples, length)
+    config_sample_data!(samples.soma_psp_samples, length)
+
+    samples.syn_weight_samples = SynapticSamples(length)
+    samples.syn_weight_samples.synapses = synapses
+    samples.syn_weight_samples.t = 1
+    for syn_id in 1:synapses
+        sams = SynapticData(length)
+        sams.id = syn_id
+        samples.syn_weight_samples.data[syn_id] = sams
+    end
+
+    samples.syn_surge_samples = SynapticSamples(length)
+    samples.syn_surge_samples.synapses = synapses
+    samples.syn_surge_samples.t = 1
+    for syn_id in 1:synapses
+        sams = SynapticData(length)
+        sams.id = syn_id
+        samples.syn_surge_samples.data[syn_id] = sams
+    end
+
+    samples.syn_psp_samples = SynapticSamples(length)
+    samples.syn_psp_samples.synapses = synapses
+    samples.syn_psp_samples.t = 1
+    for syn_id in 1:synapses
+        sams = SynapticData(length)
+        sams.id = syn_id
+        samples.syn_psp_samples.data[syn_id] = sams
+    end
 end
 
 function reset_samples!(samples::Samples)
@@ -46,6 +91,11 @@ function reset_samples!(samples::Samples)
 
     reset_sample_data!(samples.soma_apFast_samples)
     reset_sample_data!(samples.soma_apSlow_samples)
+    reset_sample_data!(samples.soma_psp_samples)
+
+    reset_sample_data!(samples.syn_weight_samples)
+    reset_sample_data!(samples.syn_surge_samples)
+    reset_sample_data!(samples.syn_psp_samples)
 end
 
 # Write out samples (aka the current span) to storage.
@@ -63,6 +113,21 @@ function write_samples!(samples::Samples, model::ModelData, span::Int64)
 
     file = path * Model.output_soma_apFast(model) * string(span) * ".data"
     write_samples_out(samples.soma_apFast_samples, file, model, float_samples_writer)
+
+    file = path * Model.output_soma_apSlow(model) * string(span) * ".data"
+    write_samples_out(samples.soma_apSlow_samples, file, model, float_samples_writer)
+
+    file = path * Model.output_soma_psp(model) * string(span) * ".data"
+    write_samples_out(samples.soma_psp_samples, file, model, float_samples_writer)
+
+    file = path * Model.output_synapse_weights(model) * string(span) * ".data"
+    write_samples_out(samples.syn_weight_samples, file, model, synapse_writer)
+
+    file = path * Model.output_synapse_surge(model) * string(span) * ".data"
+    write_samples_out(samples.syn_surge_samples, file, model, synapse_writer)
+
+    file = path * Model.output_synapse_psp(model) * string(span) * ".data"
+    write_samples_out(samples.syn_psp_samples, file, model, synapse_writer)
 end
 
 # ---------------------------------------------------------------------------
@@ -88,6 +153,25 @@ end
 
 function store_apSlow_sample!(samples::Samples, value::Float64, t::Int64)
     samples.soma_apSlow_samples.samples[t] = value
+end
+
+function store_soma_psp_sample!(samples::Samples, value::Float64, t::Int64)
+    samples.soma_psp_samples.samples[t] = value
+end
+
+function store_syn_weight_sample!(samples::Samples, syn_id::Int64, value::Float64, t::Int64)
+    sams = samples.syn_weight_samples.data[syn_id]
+    sams.samples[t] = value;
+end
+
+function store_syn_surge_sample!(samples::Samples, syn_id::Int64, value::Float64, t::Int64)
+    sams = samples.syn_surge_samples.data[syn_id]
+    sams.samples[t] = value;
+end
+
+function store_syn_psp_sample!(samples::Samples, syn_id::Int64, value::Float64, t::Int64)
+    sams = samples.syn_psp_samples.data[syn_id]
+    sams.samples[t] = value;
 end
 
 # ---------------------------------------------------------------------------
@@ -118,8 +202,19 @@ function load_samples(samples::Samples, model::ModelData)
 
         file = path * Model.output_cell_spikes(model) * string(span) * ".data"
         read_spike_samples(samples.cell_samples, model, file, span)
-    end
 
+        file = path * Model.output_soma_psp(model) * string(span) * ".data"
+        read_float_samples(samples.soma_psp_samples, model, file, span)
+
+        file = path * Model.output_synapse_weights(model) * string(span) * ".data"
+        read_synaptic_float_samples(samples.syn_weight_samples, model, file, span)
+
+        file = path * Model.output_synapse_surge(model) * string(span) * ".data"
+        read_synaptic_float_samples(samples.syn_surge_samples, model, file, span)
+
+        file = path * Model.output_synapse_psp(model) * string(span) * ".data"
+        read_synaptic_float_samples(samples.syn_psp_samples, model, file, span)
+    end
 end
 
 # Called from client/handlers.jl
@@ -138,5 +233,17 @@ function read_samples(samples::Samples, model::ModelData, span::Int64)
 
     file = path * Model.output_cell_spikes(model) * string(span) * ".data"
     read_spike_samples(samples.cell_samples, model, file, span)
+
+    file = path * Model.output_soma_psp(model) * string(span) * ".data"
+    read_float_samples(samples.soma_psp_samples, model, file, span)
+
+    file = path * Model.output_synapse_weights(model) * string(span) * ".data"
+    read_synaptic_float_samples(samples.syn_weight_samples, model, file, span)
+
+    file = path * Model.output_synapse_surge(model) * string(span) * ".data"
+    read_synaptic_float_samples(samples.syn_surge_samples, model, file, span)
+
+    file = path * Model.output_synapse_psp(model) * string(span) * ".data"
+    read_synaptic_float_samples(samples.syn_psp_samples, model, file, span)
 end
 

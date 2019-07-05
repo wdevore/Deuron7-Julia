@@ -93,7 +93,6 @@ function read_stimulus_samples(samples::Samples, model::ModelData, span::Int64)
     # source file.
     file = path * Model.output_stimulus_files(model) * string(span) * ".data"
 
-    synapses = Model.synapses(model)
     span_time = Model.span_time(model)
 
     # println("Loading new samples: ", file)
@@ -133,7 +132,6 @@ function read_stimulus_samples(samples::Samples, model::ModelData, span::Int64)
 end
 
 function read_float_samples(data_sams::SampleData, model::ModelData, file::String, span::Int64)
-    synapses = Model.synapses(model)
     span_time = Model.span_time(model)
 
     # println("Loading apFast samples: ", file)
@@ -160,4 +158,44 @@ function read_float_samples(data_sams::SampleData, model::ModelData, file::Strin
     # Prepare for next span my moving "t" to the start of the next span
     # position within the full duration of samples.
     data_sams.t += span_time
+end
+
+function read_synaptic_float_samples(syn_samples::SynapticSamples, model::ModelData, file::String, span::Int64)
+    span_time = Model.span_time(model)
+
+    # Format:
+    # id float,float,float...
+    # id float,float,float...
+    # Nth float,float,float...
+    open(file, "r") do f
+        synapses = Model.synapses(model)
+
+        for syn_id in 1:synapses
+            t = syn_samples.t # reset time index for next synapse
+
+            line_data = readline(f)
+
+            # Fetch samples bucket
+            syn_data = syn_samples.data[syn_id]
+
+            # Parse out "id" field
+            idx_range = findfirst(" ", line_data)
+            id = parse(Int64, SubString(line_data, 1, idx_range[1]))
+
+            # Extract just weight data
+            sub_line = SubString(line_data, idx_range[1] + 1, length(line_data))
+            weights = split(sub_line, ' ')
+
+            for weight in weights
+                w = parse(Float64, weight)
+                syn_data.min = min(syn_data.min, w)
+                syn_data.max = max(syn_data.max, w)
+
+                syn_data.samples[t] = w
+                t += 1
+            end
+        end
+    end
+
+    syn_samples.t += span_time
 end

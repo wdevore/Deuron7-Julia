@@ -3,33 +3,41 @@ using ..Gui
 
 # Data is a list of floats. This graph connects them end to end forming
 # a curve.
-# The data is loaded ???
-mutable struct SomaAPSlowGraph <: AbstractGraph
+mutable struct SynapsePSPGraph <: AbstractGraph
     show_vertical_t_bar_markers::Bool
     time_pos::Int64
     value::Float64
 
-    function SomaAPSlowGraph()
+    function SynapsePSPGraph()
         o = new()
         o.show_vertical_t_bar_markers = false
         o
     end
 end
 
-function draw_header(graph::SomaAPSlowGraph, gui_data::Gui.GuiData, model::Model.ModelData)
-    if CImGui.TreeNode("Controls##3")
+function draw_header(graph::SynapsePSPGraph, gui_data::Gui.GuiData, model::Model.ModelData)
+    if CImGui.TreeNode("Controls##7")
         CImGui.PushItemWidth(1000)
 
         duration = Cint(Model.duration(model))
         begin_v = Cint(Model.range_start(model))
         end_v = Cint(Model.range_end(model))
-        @c CImGui.DragIntRange2("Range##3", &begin_v, &end_v, 1, 1, duration, "Start: %d", "End: %d")
+        @c CImGui.DragIntRange2("Range##7", &begin_v, &end_v, 1, 1, duration, "Start: %d", "End: %d")
         if Int64(begin_v) > 0 && Int64(end_v) <= duration
             if Int64(begin_v) < Int64(end_v)
                 Model.set_range_start!(model, Int64(begin_v))
                 Model.set_range_end!(model, Int64(end_v))
             end
         end
+
+        CImGui.PushItemWidth(500)
+        CImGui.SameLine(1200)
+        active = Cint(Model.active_synapse(model))
+        synapses = Cint(Model.synapses(model))
+        
+        @c CImGui.SliderInt("Synapse##7", &active, 1, synapses)
+        Model.set_active_synapse!(model, Int64(active))
+        CImGui.PopItemWidth()
 
         pos = Cfloat(0.0)
         @c CImGui.SliderFloat("Scroll velocity", &pos, -5.0, 5.0, "%.2f")
@@ -51,7 +59,7 @@ function draw_header(graph::SomaAPSlowGraph, gui_data::Gui.GuiData, model::Model
     end
 end
 
-function draw_data(graph::SomaAPSlowGraph, gui_data::Gui.GuiData,
+function draw_data(graph::SynapsePSPGraph, gui_data::Gui.GuiData,
     draw_list::Ptr{CImGui.LibCImGui.ImDrawList},
     canvas_pos::CImGui.LibCImGui.ImVec2, canvas_size::CImGui.LibCImGui.ImVec2,
     model::Model.ModelData, samples::Model.Samples)
@@ -120,8 +128,10 @@ function draw_data(graph::SomaAPSlowGraph, gui_data::Gui.GuiData,
     mouse_pos = CImGui.GetMousePos()
     mpx = mouse_pos.x
 
-    data_samples = samples.soma_apSlow_samples
-
+    # Get weight samples based on active synapse
+    syn_id = Model.active_synapse(model)
+    data_samples = samples.syn_psp_samples.data[syn_id]
+    
     # Mapped data coords
     u_x = 0.0
     w_x = 0.0
@@ -166,7 +176,6 @@ function draw_data(graph::SomaAPSlowGraph, gui_data::Gui.GuiData,
     # ------------------------------------------------------------------------
     # Render segmented curve
     # ------------------------------------------------------------------------
-    # A span is a collection of rows
 
     # Iterate samples with the defined range. "t" is mapped as "x" coord
     for t in range_start:range_end
@@ -203,7 +212,7 @@ function draw_data(graph::SomaAPSlowGraph, gui_data::Gui.GuiData,
 end
 # if model.bug print("") end
 
-function draw_graph(graph::SomaAPSlowGraph, gui_data::Gui.GuiData, model::Model.ModelData, samples::Model.Samples)
+function draw_graph(graph::SynapsePSPGraph, gui_data::Gui.GuiData, model::Model.ModelData, samples::Model.Samples)
     draw_list = CImGui.GetWindowDrawList()
     canvas_pos = CImGui.GetCursorScreenPos()            # ImDrawList API uses screen coordinates!
     canvas_size = CImGui.GetContentRegionAvail()        # resize canvas to what's available
@@ -224,8 +233,6 @@ function draw_graph(graph::SomaAPSlowGraph, gui_data::Gui.GuiData, model::Model.
         IM_COL32(GRAY, GRAY, GRAY, 255), IM_COL32(GRAY, GRAY, GRAY, 255),
         IM_COL32(GRAY, GRAY, GRAY, 255), IM_COL32(GRAY, GRAY, GRAY, 255))
 
-    # CImGui.Text(@sprintf("hello"))
-
     if CImGui.IsItemHovered()
         CImGui.BeginTooltip()
         CImGui.Text(@sprintf("%d (%4.3f)", graph.time_pos, graph.value))
@@ -239,12 +246,11 @@ function draw_graph(graph::SomaAPSlowGraph, gui_data::Gui.GuiData, model::Model.
     draw_data(graph, gui_data, draw_list, canvas_pos, canvas_size, model, samples)
 end
 
-function draw(graph::SomaAPSlowGraph, gui_data::Gui.GuiData, model::Model.ModelData, samples::Model.Samples, vert_pos::Int64)
-    # CImGui.SetNextWindowPos((0, 25 + WINDOW_HEIGHT * 2), CImGui.ImGuiCond_Once)
+function draw(graph::SynapsePSPGraph, gui_data::Gui.GuiData, model::Model.ModelData, samples::Model.Samples, vert_pos::Int64)
     CImGui.SetNextWindowPos((0, vert_pos), CImGui.ImGuiCond_Once)
     CImGui.SetNextWindowSize((GRAPH_WINDOW_WIDTH, GRAPH_WINDOW_HEIGHT), CImGui.ImGuiCond_Always)
 
-    CImGui.Begin("Soma apSlow Graph")
+    CImGui.Begin("Synapse PSP Graph")
     
     draw_header(graph, gui_data, model)
 

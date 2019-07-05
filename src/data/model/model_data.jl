@@ -67,6 +67,17 @@ function load!(model::ModelData, file::String)
     model.app_data_loaded = true;
 end
 
+# Called when the app.jl is closing
+function unload(model::ModelData)
+    if is_app_changed(model)
+        save(model, "../data/app.json")
+    end
+
+    if is_sim_changed(model)
+        save_sim(model)
+    end
+end
+
 function save(model::ModelData, file::String)
     println("Saving ", file)
     open(file, "w") do f
@@ -157,7 +168,7 @@ function save_sim(model::ModelData)
     sim = simulation(model)
     path = data_path(model)
     file = path * sim
-    println("Saving: ", file)
+    println("Saving sim data: ", file)
     open(file, "w") do f
         JSON.print(f, model.sim, 2)
     end
@@ -340,11 +351,11 @@ function set_source_stimulus!(model::ModelData, v::String)
 end
 
 function output_cell_spikes(model::ModelData)
-    model.data["OutputSomaPSPFiles"]
+    model.data["OutputSomaSpikeFiles"]
 end
 function set_output_cell_spikes!(model::ModelData, v::String)
     v = strip_null(v)
-    model.data["OutputSomaPSPFiles"] = v
+    model.data["OutputSomaSpikeFiles"] = v
     set_changed(model, 0)
 end
 
@@ -363,6 +374,42 @@ end
 function set_output_soma_apSlow!(model::ModelData, v::String)
     v = strip_null(v)
     model.data["OutputSomaAPSlowFiles"] = v
+    set_changed(model, 0)
+end
+
+function output_soma_psp(model::ModelData)
+    model.data["OutputSomaPSPFiles"]
+end
+function set_output_soma_psp!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.data["OutputSomaPSPFiles"] = v
+    set_changed(model, 0)
+end
+
+function output_synapse_weights(model::ModelData)
+    model.data["OutputSynapseWeightFiles"]
+end
+function set_synapse_weights!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.data["OutputSynapseWeightFiles"] = v
+    set_changed(model, 0)
+end
+
+function output_synapse_surge(model::ModelData)
+    model.data["OutputSynapseSurgeFiles"]
+end
+function set_synapse_surge!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.data["OutputSynapseSurgeFiles"] = v
+    set_changed(model, 0)
+end
+
+function output_synapse_psp(model::ModelData)
+    model.data["OutputSynapsePspFiles"]
+end
+function set_synapse_psp!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.data["OutputSynapsePspFiles"] = v
     set_changed(model, 0)
 end
 
@@ -404,6 +451,10 @@ function set_active_synapse!(model::ModelData, v::String)
     set_active_synapse!(model, parse(Int64, v))
 end
 function set_active_synapse!(model::ModelData, v::Int64)
+    if v == active_synapse(model)
+        return
+    end
+
     model.sim["ActiveSynapse"] = v
     model.active_synapse = model.sim["ActiveSynapse"]
 

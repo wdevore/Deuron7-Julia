@@ -59,6 +59,30 @@ function float_samples_writer(samples::Array{Float64,1}, model::ModelData, f::IO
     end
 end
 
+function synapse_writer(syn_samples::SynapticSamples, model::ModelData, f::IOStream)
+    span_time = Model.span_time(model)
+
+    # Format:
+    # id float,float,float...
+    # id float,float,float...
+    # Nth float,float,float...
+
+    synapses = Model.synapses(model)
+
+    for syn_id in 1:synapses
+        syn_data = syn_samples.data[syn_id]
+
+        print(f, @sprintf("%03d ", syn_id))
+
+        for t in 1:span_time - 1
+            print(f, syn_data.samples[t], " ")
+        end
+
+        println(f, syn_data.samples[span_time])
+    end
+
+end
+
 # Write the current samples to disk, then reset.
 function write_samples_out(samples::Array, file::String, model::ModelData, writer)
     open(file, "w") do f
@@ -72,3 +96,8 @@ function write_samples_out(data::SampleData, file::String, model::ModelData, wri
     end
 end
 
+function write_samples_out(samples::SynapticSamples, file::String, model::ModelData, writer)
+    open(file, "w") do f
+        writer(samples, model, f)
+    end
+end

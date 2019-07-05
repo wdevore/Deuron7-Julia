@@ -182,8 +182,6 @@ function triplet_integration(syn::Synapse, t::Int64)
 	# psp will decrease asymtotically to zero.
     dt = Float64(t) - syn.preT
     
-	# samples.Sim.DtSamples.Put(t, dt, syn.id, 0)
-
    	dwD = 0.0
    	dwP = 0.0
    	updateWeight = false
@@ -218,8 +216,6 @@ function triplet_integration(syn::Synapse, t::Int64)
         syn.psp = syn.surge * exp(-dt / syn.taoN)
     end
 
-	# samples.Sim.SurgeSamples.Put(t, n.surge, n.id, 0)
-
 	# If an AP occurred (from the soma) we read the current psp value and add it to the "w"
    	if output(syn.soma) == 1.0
 		# #######################################
@@ -236,17 +232,17 @@ function triplet_integration(syn::Synapse, t::Int64)
         syn.w = max(min(syn.w + dwP - dwD, syn.wMax), syn.wMin)
     end
 
-	# samples.Sim.WeightSamples.Put(t, n.w, n.id, 0)
-
 	# Return the "value" of this synapse for this "t"
-   	if !syn.excititory # is inhibitory
-		# samples.Sim.PspSamples.Put(t, -n.psp, n.id, 0)
-        return -syn.psp * syn.w
-    end
+   	value = if syn.excititory 
+       	syn.psp * syn.w
+   	else
+       	-syn.psp * syn.w # is inhibitory
+   	end
 
-	# samples.Sim.PspSamples.Put(t, n.psp, n.id, 0)
+	# Collecting is centralized in streams.jl for consistency.
+   	collect_synapse!(syn.soma.samples, syn, t)
 
-   	syn.psp * syn.w
+   	value
 end
 
 # Each spike of pre-synaptic neuron j sets the presynaptic spike

@@ -37,7 +37,8 @@ end
 
 function draw_header(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Model.ModelData)
     if CImGui.TreeNode("Controls##1")
-        # CImGui.PushItemWidth(80)
+        CImGui.PushItemWidth(1000)
+
         # # Row 1 *****************************************************
         # gui_data.buffer = Model.prep_field(Model.range_start(model), 10)
         # returned = CImGui.InputText("Range Start##1", gui_data.buffer, 10, CImGui.ImGuiInputTextFlags_CharsDecimal | CImGui.ImGuiInputTextFlags_EnterReturnsTrue)
@@ -81,6 +82,8 @@ function draw_header(graph::SpikeScatterGraph, gui_data::Gui.GuiData, model::Mod
         else
             graph.show_vertical_t_bar_markers = false
         end
+
+        CImGui.PopItemWidth()
 
         CImGui.TreePop()
     end

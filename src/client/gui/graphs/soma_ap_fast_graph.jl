@@ -7,6 +7,7 @@ using ..Gui
 mutable struct SomaAPFastGraph <: AbstractGraph
     show_vertical_t_bar_markers::Bool
     time_pos::Int64
+    value::Float64
 
     function SomaAPFastGraph()
         o = new()
@@ -17,6 +18,8 @@ end
 
 function draw_header(graph::SomaAPFastGraph, gui_data::Gui.GuiData, model::Model.ModelData)
     if CImGui.TreeNode("Controls##2")
+        CImGui.PushItemWidth(1000)
+
         duration = Cint(Model.duration(model))
         begin_v = Cint(Model.range_start(model))
         end_v = Cint(Model.range_end(model))
@@ -41,6 +44,8 @@ function draw_header(graph::SomaAPFastGraph, gui_data::Gui.GuiData, model::Model
         else
             graph.show_vertical_t_bar_markers = false
         end
+
+        CImGui.PopItemWidth()
 
         CImGui.TreePop()
     end
@@ -115,6 +120,8 @@ function draw_data(graph::SomaAPFastGraph, gui_data::Gui.GuiData,
     mouse_pos = CImGui.GetMousePos()
     mpx = mouse_pos.x
 
+    data_samples = samples.soma_apFast_samples
+
     # Mapped data coords
     u_x = 0.0
     w_x = 0.0
@@ -137,6 +144,7 @@ function draw_data(graph::SomaAPFastGraph, gui_data::Gui.GuiData,
                 ImVec2(l_x, l_y + canvas_size.y),
                 LIGHT_GREY, LINE_THICKNESS)
             graph.time_pos = time_pos + 1
+            graph.value = data_samples.samples[graph.time_pos]
         else
             # Show vertical bars for visual references.
             if graph.show_vertical_t_bar_markers
@@ -159,7 +167,6 @@ function draw_data(graph::SomaAPFastGraph, gui_data::Gui.GuiData,
     # Render segmented curve
     # ------------------------------------------------------------------------
     # A span is a collection of rows
-    data_samples = samples.soma_apFast_samples
 
     # Iterate samples with the defined range. "t" is mapped as "x" coord
     for t in range_start:range_end
@@ -221,7 +228,7 @@ function draw_graph(graph::SomaAPFastGraph, gui_data::Gui.GuiData, model::Model.
 
     if CImGui.IsItemHovered()
         CImGui.BeginTooltip()
-        CImGui.Text(@sprintf("%d", graph.time_pos))
+        CImGui.Text(@sprintf("%d (%4.3f)", graph.time_pos, graph.value))
         CImGui.EndTooltip()
     end
     

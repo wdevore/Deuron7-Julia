@@ -71,8 +71,12 @@ function draw_main_panel(gui_data::GuiData, app_data::Model.AppData, sock::Comm.
                     Model.save_sim(app_data.model)
                 end
 
-                # Model.load_sim!(app_data.model)
-                Model.config!(app_data)
+                if app_data.configured
+                    # Reset samples for new incoming data
+                    Model.reset_samples!(app_data.samples)
+                else
+                    Model.config!(app_data)
+                end
             end
     
             Comm.send(sock, data)

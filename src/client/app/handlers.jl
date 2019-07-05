@@ -65,6 +65,9 @@ function handle_simulation_to_client(data::Dict{String,Any})
 
             # Read span into Samples for both poisson and stimulus
             span = data["Data2"]
+            if span == 1
+                Model.reset_samples!(app_data.samples)
+            end
             Model.read_samples(app_data.samples, app_data.model, span) 
         end
     end

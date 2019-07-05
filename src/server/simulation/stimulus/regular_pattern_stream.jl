@@ -143,7 +143,7 @@ function output(stream::RegularPatternStream, synapse::Int64)
     stream.base.output & 0x01
 end
 
-function load!(stream::RegularPatternStream, pattern_file::String, frequency::Int64)
+function load!(stream::RegularPatternStream, pattern_file::String, frequency::Int64, stim_scaler::Int64)
     # Example Format:
     # ....|.
     # ...|..
@@ -159,13 +159,29 @@ function load!(stream::RegularPatternStream, pattern_file::String, frequency::In
     open(pattern_file, "r") do f
         patterns = readlines(f)
         
-        # Each line is the same length so [1] is valid
+        # Each line is the same length so selecting the first row
+        # (aka [1]) is valid
         duration = length(patterns[1])
 
         # How many synapses or "lanes/channels"
         channels = length(patterns)
 
-        stimulus = zeros(UInt8, channels, duration)
+        # stimulus = zeros(UInt8, channels, duration)
+
+        # The array size is duration + (duration * stim_scaler)
+        # For example, if duration is 10 and stim_scaler is 3 then
+        # size of stimulus is 10 + (10*3) = 40
+        # stim_scaler thus becomes an expanding factor. For every bit in
+        # the pattern we append stim_scaler 0s.
+        size = if stim_scaler == 0
+            stim_scaler = 1
+            # Special case of 0 then duration is unchanged (i.e. reflected)
+            duration
+        else
+            duration + (duration * stim_scaler)
+        end
+
+        stimulus = zeros(UInt8, channels, size)
 
         row = 1
         for pat_samples in patterns
@@ -174,11 +190,15 @@ function load!(stream::RegularPatternStream, pattern_file::String, frequency::In
                 if c == '|'
                     stimulus[row, col] = UInt8(1)
                 end
-                col += 1
+                # Move col "past" the expansion positions.
+                col += stim_scaler
             end
             row += 1
         end
 
         config_stream!(stream, stimulus, frequency)
     end
+end
+
+function expand(stream::RegularPatternStream, scaler::Int64)
 end
