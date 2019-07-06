@@ -87,6 +87,7 @@ include("soma_psp_graph.jl")
 include("synapse_weights_graph.jl")
 include("synapse_surge_graph.jl")
 include("synapse_psp_graph.jl")
+include("synapse_input_graph.jl")
 
 spikes_graph = Graphs.SpikeScatterGraph()
 soma_apFast_graph = Graphs.SomaAPFastGraph()
@@ -95,5 +96,6 @@ soma_psp_graph = Graphs.SomaPSPGraph()
 synapse_weights_graph = Graphs.SynapseWeightGraph()
 synapse_surge_graph = Graphs.SynapseSurgeGraph()
 synapse_psp_graph = Graphs.SynapsePSPGraph()
+synapse_input_graph = Graphs.SynapticInputGraph()
 
 end # Module ---------------------------------------

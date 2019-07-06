@@ -102,7 +102,6 @@ function config_stimulus_streams!(streams::Streams, model::Model.ModelData)
 
     frequency = Model.hertz(model)
     expand_scaler = Model.stimulus_scaler(model)
-
     Simulation.load!(stream, data_file, frequency, expand_scaler)
 end
 
@@ -114,7 +113,7 @@ function exercise!(streams::Streams)
         step!(stream)
     end
 
-    for stream in streams.stim_streams # Typically Pattern
+    for stream in streams.stim_streams # Typically Patterns
         step!(stream)
     end
 
@@ -156,5 +155,6 @@ function collect_synapse!(samples::Model.Samples, syn::AbstractSynapse, t::Int64
     Model.store_syn_weight_sample!(samples, syn.id, syn.w, t)
     Model.store_syn_surge_sample!(samples, syn.id, syn.surge, t)
     Model.store_syn_psp_sample!(samples, syn.id, syn.psp, t)
+    Model.store_syn_input_sample!(samples, syn.id, Float64(output(syn.stream)), t)
 end
 

@@ -30,7 +30,10 @@ function build(model::Model.ModelData, samples::Model.Samples, streams::Streams)
     # Generated ids
     synID = 1
 
+    # Currently there is only one pattern stimulus stream. Eventually there will be more.
     pat_stream = get_stimulus_stream(streams, 1)
+
+    # Associate one of the "channels" of the pattern stream between the pattern and synapse.
 
     # ------------------------------------------------------
     # Start with excititory type synapses first.
@@ -46,19 +49,22 @@ function build(model::Model.ModelData, samples::Model.Samples, streams::Streams)
         merger = Simulation.StreamMerger() # A input to a synapse
         Simulation.add_merger_stream!(streams, merger)
         
-        # Attach the stream to the synapse.
+        # Router the stream "into" the synapse via attachment.
         set_stream!(synapse, merger)
 
         # REGION ------------------------------------------------------
         # Find matching poi stream and add to merger
         poi_stream = get_poisson_stream(streams, synID)
 
+        # Add poisson stream to merger stream
         Simulation.add_stream!(merger, poi_stream)
         # END-REGION ------------------------------------------------------
 
         # REGION ------------------------------------------------------
-        # Add pattern stream again. The synapse's id will select the sub-stream
-        Simulation.add_stream!(merger, pat_stream)
+        # Add pattern stream again. The synapse's id will select a channel
+        # from pattern stream
+        channel = PatternChannel(pat_stream, synID)
+        Simulation.add_stream!(merger, channel)
         # END-REGION ------------------------------------------------------
 
         synID += 1
@@ -87,7 +93,8 @@ function build(model::Model.ModelData, samples::Model.Samples, streams::Streams)
 
         # REGION ------------------------------------------------------
         # Add pattern stream again. The synapse's id will select the sub-stream
-        Simulation.add_stream!(merger, pat_stream)
+        channel = PatternChannel(pat_stream, synID)
+        Simulation.add_stream!(merger, channel)
         # END-REGION ------------------------------------------------------
 
         synID += 1

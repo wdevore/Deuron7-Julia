@@ -80,10 +80,13 @@ mutable struct Samples
     soma_apSlow_samples::SampleData
 
     # Synaptic data
+    synapses::Int64
     syn_weight_samples::SynapticSamples
     syn_surge_samples::SynapticSamples
     syn_psp_samples::SynapticSamples
-    synapses::Int64
+
+    # Mostly for validating the merger streams.
+    syn_input_samples::SynapticSamples
     
     # State managment during simulation run and between spans.
     # Start index of each span

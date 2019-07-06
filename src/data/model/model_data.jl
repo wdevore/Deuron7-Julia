@@ -413,6 +413,15 @@ function set_synapse_psp!(model::ModelData, v::String)
     set_changed(model, 0)
 end
 
+function output_synapse_input_spike(model::ModelData)
+    model.data["OutputSynapseSpikeFiles"]
+end
+function set_synapse_input_spike!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.data["OutputSynapseSpikeFiles"] = v
+    set_changed(model, 0)
+end
+
 # --------------------------------------------------------------
 # Simulation Setter/Getters
 # --------------------------------------------------------------

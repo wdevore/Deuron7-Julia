@@ -20,7 +20,7 @@ mutable struct Synapse <: AbstractSynapse
     wMax::Float64
    	wMin::Float64
 
-    # The stream (aka axon) that feeds into this synapse
+    # The stream (aka Merger) that feeds into this synapse
     stream::AbstractBitStream
 
 	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
