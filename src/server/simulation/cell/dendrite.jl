@@ -24,6 +24,11 @@ function initialize!(dendrite::AbstractDendrite)
     dendrite.taoEff = Model.tao_eff(dendrite.model)
     dendrite.length = Model.dendrite_length(dendrite.model)
 
+    println("___ Dendrite properties ___")
+    println("| taoEff: ", dendrite.taoEff)
+    println("| length: ", dendrite.length)
+    println("---------------------------")
+
     for compartment in dendrite.compartments
         initialize!(compartment)
     end
@@ -48,11 +53,11 @@ function AP_efficacy(dendrite::AbstractDendrite, distance::Float64)
     exp(-(dendrite.length - distance) / dendrite.taoEff)
 end
 
-function integrate!(dendrite::AbstractDendrite, t::Int64)
+function integrate!(dendrite::AbstractDendrite, span_t::Int64, t::Int64)
     psp = 0.0
     
     for compartment in dendrite.compartments
-        psp += integrate!(compartment, t)
+        psp += integrate!(compartment, span_t, t)
     end
 
     psp

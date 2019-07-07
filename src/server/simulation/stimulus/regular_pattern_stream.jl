@@ -41,7 +41,7 @@ mutable struct RegularPatternStream <: AbstractBitStream
     end
 end
 
-function config_stream!(stream::RegularPatternStream, pattern::Array{UInt8,2}, frequency::Int64)
+function config_stream!(stream::RegularPatternStream, pattern::Array{UInt8,2}, frequency::Float64)
     stream.pattern = pattern
     stream.frequency = frequency
 
@@ -49,14 +49,14 @@ function config_stream!(stream::RegularPatternStream, pattern::Array{UInt8,2}, f
     stream.synapses = length(pattern[:, 1])
 
     # frequency = patterns/second or pattern/1000ms
-    milliseconds = 1000 # convert to milliseconds
-    period = 1 / frequency
+    milliseconds = 1000.0 # convert to milliseconds
+    period = 1.0 / frequency
     stream.ipi = Int64(round(period * milliseconds)) - stream.pattern_length
 
     println("-------------------------------")
     println("RegularPatternStream properties:")
     println("period: ", period)
-    println("pattern every: ", period * 1000, " ms")
+    println("pattern presented every: ", period * 1000, " ms")
     println("pattern_length: ", stream.pattern_length)
     println("ipi: ", stream.ipi)
     println("-------------------------------")
@@ -143,7 +143,7 @@ function output(stream::RegularPatternStream, synapse::Int64)
     stream.base.output & 0x01
 end
 
-function load!(stream::RegularPatternStream, pattern_file::String, frequency::Int64, stim_scaler::Int64)
+function load!(stream::RegularPatternStream, pattern_file::String, frequency::Float64, stim_scaler::Int64)
     # Example Format:
     # ....|.
     # ...|..
@@ -190,7 +190,7 @@ function load!(stream::RegularPatternStream, pattern_file::String, frequency::In
                 if c == '|'
                     stimulus[row, col] = UInt8(1)
                 end
-                # Move col "past" the expansion positions.
+                # Move col "past" the expansed positions.
                 col += stim_scaler
             end
             row += 1

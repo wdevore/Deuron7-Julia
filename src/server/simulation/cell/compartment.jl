@@ -31,6 +31,11 @@ function initialize!(compartment::Compartment)
     compartment.weight_max = Model.weight_max(compartment.model)
     compartment.weight_divisor = Model.weight_divisor(compartment.model)
 
+    println("___ Compartment properties ___")
+    println("| weight_max: ", compartment.weight_max)
+    println("| weight_divisor: ", compartment.weight_divisor)
+    println("---------------------------")
+
     for synapse in compartment.synapses
         initialize!(synapse)
     end
@@ -42,11 +47,11 @@ function reset!(compartment::Compartment)
     end
 end
 
-function integrate!(compartment::Compartment, t::Int64)
+function integrate!(compartment::Compartment, span_t::Int64, t::Int64)
     psp = 0.0
 
     for synapse in compartment.synapses
-        psp += integrate!(synapse, t)
+        psp += integrate!(synapse, span_t, t)
     end
 
     psp

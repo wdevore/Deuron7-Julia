@@ -501,7 +501,7 @@ function hertz(model::ModelData)
 end
 function set_hertz!(model::ModelData, v::String)
     v = strip_null(v)
-    model.sim["Hertz"] = parse(Int64, v)
+    model.sim["Hertz"] = parse(Float64, v)
     set_changed(model, 1)
 end
 

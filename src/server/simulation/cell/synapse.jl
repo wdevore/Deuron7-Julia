@@ -84,8 +84,8 @@ mutable struct Synapse <: AbstractSynapse
    	taoI::Float64
    	prevEffTrace::Float64
 
-   	learningRateSlow::Float64
-   	learningRateFast::Float64
+   	learningRateSlow::Float64 # Unused
+   	learningRateFast::Float64 # Unused
 
 	# -----------------------------------
 	# Fall off
@@ -140,6 +140,25 @@ function initialize!(syn::Synapse)
 
    	syn.wMax = Model.w_max(syn.model)
    	syn.wMin = Model.w_min(syn.model)
+
+   	# println("___ Synapse properties ___")
+   	# println("| taoI: ", syn.taoI)
+   	# println("| taoP: ", syn.taoP)
+   	# println("| taoN: ", syn.taoN)
+   	# println("| mu: ", syn.mu)
+   	# println("| distance: ", syn.distance)
+   	# println("| lambda: ", syn.lambda)
+   	# println("| ama: ", syn.ama)
+   	# println("| amb: ", syn.amb)
+   	# println("| w: ", syn.w)
+   	# println("| alpha: ", syn.alpha)
+   	# println("| learningRateFast: ", syn.learningRateFast)
+   	# println("| learningRateSlow: ", syn.learningRateSlow)
+   	# println("| distanceEfficacy: ", syn.distanceEfficacy)
+   	# println("| wMax: ", syn.wMax)
+   	# println("| wMin: ", syn.wMin)
+   	# println("---------------------------")
+   
 end
 
 # Reset properties to default values from model.
@@ -163,8 +182,8 @@ function pre_integrate!(syn::Synapse)
 end
 
 # The main integration. Returns a float value
-function integrate!(syn::Synapse, t::Int64)
-    triplet_integration(syn, t)
+function integrate!(syn::Synapse, span_t::Int64, t::Int64)
+    triplet_integration(syn, span_t, t)
 end
 
 function post_integrate!(syn::Synapse)
@@ -177,7 +196,7 @@ end
 #
 # Depression: fast post trace with at pre spike
 # Potentiation: slow post trace at post spike
-function triplet_integration(syn::Synapse, t::Int64)
+function triplet_integration(syn::Synapse, span_t::Int64, t::Int64)
 	# Calc psp based on current dynamics: (t - preT). As dt increases
 	# psp will decrease asymtotically to zero.
     dt = Float64(t) - syn.preT
@@ -188,12 +207,13 @@ function triplet_integration(syn::Synapse, t::Int64)
 
 	# The output of the stream is the input to this synapse.
 	# The stream is almost always a StreamMerger
-   	if output(syn.stream) == 1
+	   if output(syn.stream) == 1
+		# A spike has arrived on the input to this synapse.
        	# println("(", t, ") syn: ", syn.id)
-       	if syn.excititory
-            syn.surge = syn.psp + syn.ama * exp(-syn.psp / syn.taoP)
+       	syn.surge = if syn.excititory
+            syn.psp + syn.ama * exp(-syn.psp / syn.taoP)
        	else 
-            syn.surge = syn.psp + syn.ama * exp(-syn.psp / syn.taoN)
+            syn.psp + syn.ama * exp(-syn.psp / syn.taoN)
         end
 
 		# #######################################
@@ -210,11 +230,11 @@ function triplet_integration(syn::Synapse, t::Int64)
         updateWeight = true
     end
 
-   	if syn.excititory
-        syn.psp = syn.surge * exp(-dt / syn.taoP)
+   	syn.psp = if syn.excititory
+       	syn.surge * exp(-dt / syn.taoP)
    	else
-        syn.psp = syn.surge * exp(-dt / syn.taoN)
-    end
+       	syn.surge * exp(-dt / syn.taoN)
+   	end
 
 	# If an AP occurred (from the soma) we read the current psp value and add it to the "w"
    	if output(syn.soma) == 1.0
@@ -240,7 +260,7 @@ function triplet_integration(syn::Synapse, t::Int64)
    	end
 
 	# Collecting is centralized in streams.jl for consistency.
-   	collect_synapse!(syn.soma.samples, syn, t)
+   	collect_synapse!(syn.soma.samples, syn, span_t)
 
    	value
 end
@@ -252,13 +272,13 @@ end
 # In other words, the efficacy of a spike is suppressed by
 # the proximity of a previous spike.
 function efficacy(syn::Synapse, dt)
-   	1 - exp(-dt / syn.taoI)
+   	1.0 - exp(-dt / syn.taoI)
 end
 
 # mu = 0.0 = additive, mu = 1.0 = multiplicative
 function weight_factor(syn::Synapse, potentiation::Bool)
     if potentiation 
-        return syn.lambda * ((1 - syn.w / syn.wMax)^syn.mu)
+        return syn.lambda * ((1.0 - syn.w / syn.wMax)^syn.mu)
    	end
 
    	syn.lambda * syn.alpha * ((syn.w / syn.wMax)^syn.mu)

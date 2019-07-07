@@ -33,9 +33,9 @@ const GREEN_TRAN = IM_COL32(0, 255, 0, 128)
 const WHITE_TRAN = IM_COL32(255, 255, 255, 100)
 const WHITE = IM_COL32(255, 255, 255, 255)
 const LIME_GREEN = IM_COL32(166, 255, 77, 255)
-const BLUE = IM_COL32(26, 209, 255, 255)
+const BLUE = IM_COL32(0, 0, 255, 255)
+const LIGHT_BLUE = IM_COL32(0, 169, 224, 255) # Pantone light blue
 const ORANGE = IM_COL32(255, 128, 0, 255)
-const LIGHT_BLUE = IM_COL32(121, 189, 232, 255)
 const GREY = IM_COL32(100, 100, 100, 255)
 const LIGHT_GREY = IM_COL32(200, 200, 200, 255)
 
@@ -87,7 +87,7 @@ include("soma_psp_graph.jl")
 include("synapse_weights_graph.jl")
 include("synapse_surge_graph.jl")
 include("synapse_psp_graph.jl")
-include("synapse_input_graph.jl")
+# include("synapse_input_graph.jl")
 
 spikes_graph = Graphs.SpikeScatterGraph()
 soma_apFast_graph = Graphs.SomaAPFastGraph()
@@ -96,6 +96,6 @@ soma_psp_graph = Graphs.SomaPSPGraph()
 synapse_weights_graph = Graphs.SynapseWeightGraph()
 synapse_surge_graph = Graphs.SynapseSurgeGraph()
 synapse_psp_graph = Graphs.SynapsePSPGraph()
-synapse_input_graph = Graphs.SynapticInputGraph()
+# synapse_input_graph = Graphs.SynapticInputGraph()
 
 end # Module ---------------------------------------

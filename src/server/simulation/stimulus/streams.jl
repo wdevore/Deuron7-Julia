@@ -96,8 +96,10 @@ function config_stimulus_streams!(streams::Streams, model::Model.ModelData)
 
     println("Loading stimulus: ", data_file)
 
+    # Create stream for loading
     stream = Simulation.RegularPatternStream()
 
+    # Collect it for later iteration.
     add_stimulus_stream!(streams, stream)
 
     frequency = Model.hertz(model)

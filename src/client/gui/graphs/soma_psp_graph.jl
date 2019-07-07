@@ -69,6 +69,8 @@ function draw_data(graph::SomaPSPGraph, gui_data::Gui.GuiData,
     synapses = Model.synapses(model)
     span_time = Model.span_time(model)
     duration = Model.duration(model)
+    threshold = Model.threshold(model)
+
     canvas_width = Float64(canvas_size.x)
     canvas_height = Float64(canvas_size.y)
 
@@ -190,6 +192,48 @@ function draw_data(graph::SomaPSPGraph, gui_data::Gui.GuiData,
         # if model.bug println("vt: ", vt) end
         pl_x = l_x
         pl_y = l_y
+    end
+
+    # ------------------------------------------------------------------------
+    # Render threshold line
+    # ------------------------------------------------------------------------
+    if threshold < data_samples.max
+        u_y = map_sample_to_unit(threshold, data_samples.min, data_samples.max)
+        u_y = 1.0 - u_y # Flip in unit-space
+        w_y = map_unit_to_window(u_y, 0.0, canvas_height)
+        (_, l_y) = map_window_to_local(0.0, w_y, canvas_pos)
+        # println(data_samples.max, ", ", threshold, ", ", u_y, ", ", l_y)
+
+        w_bx = map_unit_to_window(0.0, 0.0, canvas_width)
+        w_ex = map_unit_to_window(1.0, 0.0, canvas_width)
+        (l_bx, _) = map_window_to_local(w_bx, 0.0, canvas_pos)
+        (l_ex, _) = map_window_to_local(w_ex, 0.0, canvas_pos)
+
+        # println(l_bx, ", ", l_y, ", ", l_ex, ", ", l_y)
+        CImGui.AddLine(draw_list,
+            ImVec2(l_bx, l_y), ImVec2(l_ex, l_y), 
+            LIGHT_BLUE, LINE_THICKNESS)
+    end
+
+    # ------------------------------------------------------------------------
+    # Render zero line
+    # ------------------------------------------------------------------------
+    if data_samples.min < 0.0
+        u_y = map_sample_to_unit(0.0, data_samples.min, data_samples.max)
+        u_y = 1.0 - u_y # Flip in unit-space
+        w_y = map_unit_to_window(u_y, 0.0, canvas_height)
+        (_, l_y) = map_window_to_local(0.0, w_y, canvas_pos)
+        # println(data_samples.min, ", ", u_y, ", ", l_y)
+
+        w_bx = map_unit_to_window(0.0, 0.0, canvas_width)
+        w_ex = map_unit_to_window(1.0, 0.0, canvas_width)
+        (l_bx, _) = map_window_to_local(w_bx, 0.0, canvas_pos)
+        (l_ex, _) = map_window_to_local(w_ex, 0.0, canvas_pos)
+
+        # println(l_bx, ", ", l_y, ", ", l_ex, ", ", l_y)
+        CImGui.AddLine(draw_list,
+            ImVec2(l_bx, l_y), ImVec2(l_ex, l_y), 
+            LIGHT_GREY, LINE_THICKNESS)
     end
 
     # if model.bug print(l_x, ",") end

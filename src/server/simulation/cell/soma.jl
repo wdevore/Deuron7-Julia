@@ -80,6 +80,17 @@ function initialize!(soma::AbstractSoma)
    	soma.APMax = Model.ap_max(soma.model)
     # println(soma.nInitialFastSurge, ", ", soma.nInitialSlowSurge, ", ", soma.ntao, ", ", soma.ntaoS)
 
+   	println("___ Soma properties ___")
+    println("| refractoryPeriod: ", soma.refractoryPeriod)
+    println("| nInitialFastSurge: ", soma.nInitialFastSurge)
+    println("| nInitialSlowSurge: ", soma.nInitialSlowSurge)
+    println("| ntao: ", soma.ntao)
+    println("| ntaoS: ", soma.ntaoS)
+    println("| ntaoJ: ", soma.ntaoJ)
+    println("| threshold: ", soma.threshold)
+    println("| APMax: ", soma.APMax)
+    println("---------------------------")
+
    	initialize!(soma.dendrite)
 end
 
@@ -98,13 +109,13 @@ function reset!(soma::AbstractSoma)
     reset!(soma.dendrite)
 end
 
-function integrate!(soma::AbstractSoma, t::Int64)
-    dt = t - soma.preT
+function integrate!(soma::AbstractSoma, span_t::Int64, t::Int64)
+   	dt = t - soma.preT
 
-    soma.efficacyTrace = efficacy(soma, dt)
+   	soma.efficacyTrace = efficacy(soma, dt)
 
 	# The dendrite will return a value that affects the soma.
-    soma.psp = integrate!(soma.dendrite, t)
+    soma.psp = integrate!(soma.dendrite, span_t, t)
 
 	# Default state
     set!(soma.axon, UInt8(0)) # Set output
@@ -150,7 +161,7 @@ function integrate!(soma::AbstractSoma, t::Int64)
    	soma.apSlow = soma.nSlowSurge * exp(-dt / soma.ntaoS)
 
 	# Collecting is centralized in streams.jl for consistency.
-   	collect!(soma.samples, soma, t)
+   	collect!(soma.samples, soma, span_t)
 
    	output(soma.axon)
 end

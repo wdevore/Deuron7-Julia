@@ -35,8 +35,8 @@ function reset!(cell::Cell)
     reset!(cell.soma)
 end
 
-function integrate!(cell::Cell, t::Int64)
-    integrate!(cell.soma, t)
+function integrate!(cell::Cell, span_t::Int64, t::Int64)
+    integrate!(cell.soma, span_t, t)
 end
 
 function output(cell::Cell)

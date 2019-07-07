@@ -48,7 +48,12 @@ function simulate(chan::Channel{String},
     # ~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--~--
     spans = Model.spans(model)
 
+    # duration = Model.duration(model)
+    
     println("### --------- Starting Simulation -------- ###")
+
+    # Master time.
+    t = 1
 
     # Run each span
     for span in 1:spans
@@ -56,17 +61,19 @@ function simulate(chan::Channel{String},
         # "t" is a single time step representing a single TimeScale.
         # If the TimeScale = 100us then if t = 2 then 100us passed
         # and when t = 3 then 200us passed etc.
-        for t in 1:span_time  # a single tick of the simulation.
+        for span_t in 1:span_time  # a single tick of the simulation for one span
             # This is the core of the simulation.
-            integrate!(cell, t)
+            integrate!(cell, span_t, t)
 
             # Collecting is centralized in streams.jl for consistency.
             # Collect all data for analysis by client.
-            collect!(streams, samples, t)
+            collect!(streams, samples, span_t)
 
             # Exercise all stimulus which means all merger streams.
             # This causes each stream to update and move its internal value to its output.
             exercise!(streams)
+
+            t += 1
         end
 
         # We have finished a span, write it out to disk
