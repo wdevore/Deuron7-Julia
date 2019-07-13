@@ -30,16 +30,6 @@ function draw_header(graph::SynapseSurgeGraph, gui_data::Gui.GuiData, model::Mod
             end
         end
 
-        CImGui.PushItemWidth(500)
-        CImGui.SameLine(1200)
-        active = Cint(Model.active_synapse(model))
-        synapses = Cint(Model.synapses(model))
-        
-        # @c CImGui.DragInt("Synapse##5", &active, 1, 1, synapses, "%d")
-        @c CImGui.SliderInt("Synapse##6", &active, 1, synapses)
-        Model.set_active_synapse!(model, Int64(active))
-        CImGui.PopItemWidth()
-
         pos = Cfloat(0.0)
         @c CImGui.SliderFloat("Scroll velocity", &pos, -5.0, 5.0, "%.2f")
         Model.set_scroll!(model, Float64(pos))
