@@ -681,6 +681,19 @@ function set_dendrite_length!(model::ModelData, v::Float64)
     set_changed(model, 1)
 end
 
+function dendrite_min_psp(model::ModelData)
+    model.dendrite["MinPSPValue"]
+end
+function set_dendrite_min_psp!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.dendrite["MinPSPValue"] = parse(Float64, v)
+    set_changed(model, 1)
+end
+function set_dendrite_min_psp!(model::ModelData, v::Float64)
+    model.dendrite["MinPSPValue"] = v
+    set_changed(model, 1)
+end
+
 # --------------------------------------------------------------
 # Compartments Setter/Getters
 # --------------------------------------------------------------

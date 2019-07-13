@@ -6,6 +6,9 @@ mutable struct Dendrite <: AbstractDendrite
     taoEff::Float64
     length::Float64
 
+    # Minimum value. Typically 0.0
+    min_psp::Float64
+
     # Contains Compartments
     compartments::Array{AbstractCompartment,1}
 
@@ -23,10 +26,12 @@ function initialize!(dendrite::AbstractDendrite)
     # Set properties based on model. These drive the other properties.
     dendrite.taoEff = Model.tao_eff(dendrite.model)
     dendrite.length = Model.dendrite_length(dendrite.model)
+    dendrite.min_psp = Model.dendrite_min_psp(dendrite.model)
 
     println("___ Dendrite properties ___")
     println("| taoEff: ", dendrite.taoEff)
     println("| length: ", dendrite.length)
+    println("| min_psp: ", dendrite.min_psp)
     println("---------------------------")
 
     for compartment in dendrite.compartments
@@ -59,6 +64,8 @@ function integrate!(dendrite::AbstractDendrite, span_t::Int64, t::Int64)
     for compartment in dendrite.compartments
         psp += integrate!(compartment, span_t, t)
     end
+
+    psp = max(psp, dendrite.min_psp)
 
     psp
 end

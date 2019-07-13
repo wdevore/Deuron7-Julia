@@ -1,6 +1,7 @@
 include("neuron_panel.jl")
 include("poisson_panel.jl")
 include("synapse_panel.jl")
+include("dendrite_panel.jl")
 
 function draw_simulation_panel(gui_data::GuiData, app_data::Model.AppData, sock::Comm.SocClient)
     if CImGui.CollapsingHeader("Simulation")
@@ -29,6 +30,8 @@ function draw_simulation_panel(gui_data::GuiData, app_data::Model.AppData, sock:
         draw_poisson_panel(gui_data, app_data, sock)
 
         draw_neuron_panel(gui_data, app_data, sock)
+
+        draw_dendrite_panel(gui_data, app_data, sock)
 
         draw_synapse_panel(gui_data, app_data, sock)
     end

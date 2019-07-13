@@ -1,15 +1,17 @@
 {
   "Synapses": 10,
-  "Firing_Rate": 0.005,
+  "ActiveSynapse": 1,
   "Poisson_Pattern_spread": 50,
   "PercentOfExcititorySynapses": 80.0,
-  "Hertz": 50,
+  "Poisson_Pattern_min": 50,
+  "Firing_Rate": 0.005,
   "Neuron": {
     "ntao": 10,
     "Dendrites": {
       "length": 1.0,
       "taoEff": 10.0,
       "id": 0,
+      "MinPSPValue": 0.0,
       "Compartments": [
         {
           "Synapses": [
@@ -177,12 +179,11 @@
     "id": 0,
     "ntaoS": 50,
     "APMax": 20,
-    "Threshold": 39,
+    "Threshold": 25.0,
     "RefractoryPeriod": 3,
     "nSlowSurge": 8
   },
-  "Poisson_Pattern_min": 50,
   "StimulusScaler": 9,
-  "ActiveSynapse": 1,
+  "Hertz": 5.0,
   "Poisson_Pattern_max": 300
 }
