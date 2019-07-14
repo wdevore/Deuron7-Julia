@@ -27,6 +27,10 @@ mutable struct ModelData
     sim_changed::Bool
     app_changed::Bool
 
+    # True = apply synapse property to all synapses
+    # not just the active synapse.
+    apply_to_all::Bool
+
     function ModelData()
         o = new()
 
@@ -37,6 +41,7 @@ mutable struct ModelData
         o.app_changed = false
         o.sim_data_loaded = false
         o.app_data_loaded = false
+        o.apply_to_all = true
         o
     end
 end
@@ -738,9 +743,19 @@ end
 function alpha(model::ModelData)
     model.synapse["alpha"]
 end
+# Set alpha only on the active synapse
 function set_alpha!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["alpha"] = parse(Float64, v)
+    set_changed(model, 1)
+end
+# Set alpha on all synapses
+function set_alphas!(model::ModelData, v::String)
+    v = strip_null(v)
+    f = parse(Float64, v)
+    for synapse in model.synapses
+        synapse["alpha"] = f
+    end
     set_changed(model, 1)
 end
 
@@ -752,6 +767,14 @@ function set_ama!(model::ModelData, v::String)
     model.synapse["ama"] = parse(Float64, v)
     set_changed(model, 1)
 end
+function set_amas!(model::ModelData, v::String)
+    v = strip_null(v)
+    f = parse(Float64, v)
+    for synapse in model.synapses
+        synapse["ama"] = f
+    end
+    set_changed(model, 1)
+end
 
 function amb(model::ModelData)
     model.synapse["amb"]
@@ -759,6 +782,14 @@ end
 function set_amb!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["amb"] = parse(Float64, v)
+    set_changed(model, 1)
+end
+function set_ambs!(model::ModelData, v::String)
+    v = strip_null(v)
+    f = parse(Float64, v)
+    for synapse in model.synapses
+        synapse["amb"] = f
+    end
     set_changed(model, 1)
 end
 
@@ -770,6 +801,14 @@ function set_lambda!(model::ModelData, v::String)
     model.synapse["lambda"] = parse(Float64, v)
     set_changed(model, 1)
 end
+function set_lambdas!(model::ModelData, v::String)
+    v = strip_null(v)
+    f = parse(Float64, v)
+    for synapse in model.synapses
+        synapse["lambda"] = f
+    end
+    set_changed(model, 1)
+end
 
 function learning_rate_fast(model::ModelData)
     model.synapse["learningRateFast"]
@@ -777,6 +816,14 @@ end
 function set_learning_rate_fast!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["learningRateFast"] = parse(Float64, v)
+    set_changed(model, 1)
+end
+function set_learning_rate_fasts!(model::ModelData, v::String)
+    v = strip_null(v)
+    f = parse(Float64, v)
+    for synapse in model.synapses
+        synapse["learningRateFast"] = f
+    end
     set_changed(model, 1)
 end
 
@@ -788,6 +835,14 @@ function set_learning_rate_slow!(model::ModelData, v::String)
     model.synapse["learningRateSlow"] = parse(Float64, v)
     set_changed(model, 1)
 end
+function set_learning_rate_slows!(model::ModelData, v::String)
+    v = strip_null(v)
+    f = parse(Float64, v)
+    for synapse in model.synapses
+        synapse["learningRateSlow"] = f
+    end
+    set_changed(model, 1)
+end
 
 function mu(model::ModelData)
     model.synapse["mu"]
@@ -795,6 +850,14 @@ end
 function set_mu!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["mu"] = parse(Float64, v)
+    set_changed(model, 1)
+end
+function set_mus!(model::ModelData, v::String)
+    v = strip_null(v)
+    f = parse(Float64, v)
+    for synapse in model.synapses
+        synapse["mu"] = f
+    end
     set_changed(model, 1)
 end
 
@@ -806,6 +869,14 @@ function set_taoI!(model::ModelData, v::String)
     model.synapse["taoI"] = parse(Float64, v)
     set_changed(model, 1)
 end
+function set_taoIs!(model::ModelData, v::String)
+    v = strip_null(v)
+    f = parse(Float64, v)
+    for synapse in model.synapses
+        synapse["taoI"] = f
+    end
+    set_changed(model, 1)
+end
 
 function taoN(model::ModelData)
     model.synapse["taoN"]
@@ -815,6 +886,14 @@ function set_taoN!(model::ModelData, v::String)
     model.synapse["taoN"] = parse(Float64, v)
     set_changed(model, 1)
 end
+function set_taoNs!(model::ModelData, v::String)
+    v = strip_null(v)
+    f = parse(Float64, v)
+    for synapse in model.synapses
+        synapse["taoN"] = f
+    end
+    set_changed(model, 1)
+end
 
 function taoP(model::ModelData)
     model.synapse["taoP"]
@@ -822,6 +901,14 @@ end
 function set_taoP!(model::ModelData, v::String)
     v = strip_null(v)
     model.synapse["taoP"] = parse(Float64, v)
+    set_changed(model, 1)
+end
+function set_taoPs!(model::ModelData, v::String)
+    v = strip_null(v)
+    f = parse(Float64, v)
+    for synapse in model.synapses
+        synapse["taoP"] = f
+    end
     set_changed(model, 1)
 end
 
@@ -834,16 +921,27 @@ function set_distance!(model::ModelData, v::String)
     model.synapse["distance"] = parse(Float64, v)
     set_changed(model, 1)
 end
+function set_distances!(model::ModelData, v::String)
+    v = strip_null(v)
+    f = parse(Float64, v)
+    for synapse in model.synapses
+        synapse["distance"] = f
+    end
+    set_changed(model, 1)
+end
 
 function weight(model::ModelData)
     model.synapse["w"]
 end
-function set_weight!(model::ModelData, v::String)
-    v = strip_null(v)
-    model.synapse["w"] = parse(Float64, v)
-    set_changed(model, 1)
-end
 function set_weight!(model::ModelData, v::Float64)
     model.synapse["w"] = v
+    set_changed(model, 1)
+end
+function set_weights!(model::ModelData, v::String)
+    v = strip_null(v)
+    f = parse(Float64, v)
+    for synapse in model.synapses
+        synapse["w"] = f
+    end
     set_changed(model, 1)
 end
