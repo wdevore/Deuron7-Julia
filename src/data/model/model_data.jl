@@ -224,10 +224,6 @@ end
 # --------------------------------------------------------------
 # Application Setter/Getters
 # --------------------------------------------------------------
-function app_root_path(model::ModelData)
-    model.data["AppRootPath"]
-end
-
 function data_path(model::ModelData)
     model.data["DataPath"]
 end

@@ -89,8 +89,12 @@ end
 
 function config_stimulus_streams!(streams::Streams, model::Model.ModelData)
     # Load stimulus pattern
-    root_path = Model.app_root_path(model)
     pattern_file_prefix = Model.source_stimulus(model)
+
+    working_dir = pwd()
+    
+    src_range = findlast("src/", working_dir)
+    root_path = working_dir[1:src_range[end]]
 
     data_file = root_path * "data/" * pattern_file_prefix * ".data"
 
