@@ -262,7 +262,7 @@ function triplet_integration(syn::Synapse, span_t::Int64, t::Int64)
 	# Collecting is centralized in streams.jl for consistency.
    	collect_synapse!(syn.soma.samples, syn, span_t)
 
-   	value
+   	(value, syn.w)
 end
 
 # Each spike of pre-synaptic neuron j sets the presynaptic spike

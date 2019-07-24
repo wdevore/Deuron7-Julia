@@ -12,6 +12,10 @@ mutable struct Dendrite <: AbstractDendrite
     # Contains Compartments
     compartments::Array{AbstractCompartment,1}
 
+    # Average weight over time
+    average::Float64
+    synapses::Int64
+
     function Dendrite(soma::AbstractSoma, model::Model.ModelData)
         o = new()
         o.model = model
@@ -27,6 +31,7 @@ function initialize!(dendrite::AbstractDendrite)
     dendrite.taoEff = Model.tao_eff(dendrite.model)
     dendrite.length = Model.dendrite_length(dendrite.model)
     dendrite.min_psp = Model.dendrite_min_psp(dendrite.model)
+    dendrite.synapses = Model.synapses(dendrite.model)
 
     println("___ Dendrite properties ___")
     println("| taoEff: ", dendrite.taoEff)
@@ -60,12 +65,20 @@ end
 
 function integrate!(dendrite::AbstractDendrite, span_t::Int64, t::Int64)
     psp = 0.0
-    
+    total_weight = 0.0
+
     for compartment in dendrite.compartments
-        psp += integrate!(compartment, span_t, t)
+        (sum, total) = integrate!(compartment, span_t, t)
+        psp += sum
+        total_weight += total
     end
 
     psp = max(psp, dendrite.min_psp)
+
+    dendrite.average = total_weight / Float64(dendrite.synapses)
+
+    # Collecting is centralized in streams.jl for consistency.
+    collect_dendrite!(dendrite.soma.samples, dendrite, span_t)
 
     psp
 end

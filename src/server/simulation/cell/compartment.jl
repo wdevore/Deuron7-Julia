@@ -49,10 +49,13 @@ end
 
 function integrate!(compartment::Compartment, span_t::Int64, t::Int64)
     psp = 0.0
+    total_weight = 0.0
 
     for synapse in compartment.synapses
-        psp += integrate!(synapse, span_t, t)
+        (sum, weight) = integrate!(synapse, span_t, t)
+        psp += sum
+        total_weight += weight
     end
 
-    psp
+    (psp, total_weight)
 end

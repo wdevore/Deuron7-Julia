@@ -10,6 +10,7 @@
   "RangeEnd": 2000,
   "SourceStimulus": "stim_2",
   "Duration": 2000,
+  "OutputDendriteAvgFiles": "dendrite_avg_samples_span_",
   "RangeStart": 1,
   "OutputSynapseWeightFiles": "synapse_weight_samples_span_",
   "OutputSomaSpikeFiles": "soma_spike_samples_span_",

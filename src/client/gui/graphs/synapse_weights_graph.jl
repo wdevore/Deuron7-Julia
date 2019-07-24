@@ -167,8 +167,6 @@ function draw_data(graph::SynapseWeightGraph, gui_data::Gui.GuiData,
     # ------------------------------------------------------------------------
     # Render segmented curve
     # ------------------------------------------------------------------------
-    # Get weight samples based on active synapse
-
     # Iterate samples with the defined range. "t" is mapped as "x" coord
     for t in range_start:range_end
         s_y = data_samples.samples[t]
@@ -187,6 +185,37 @@ function draw_data(graph::SynapseWeightGraph, gui_data::Gui.GuiData,
         CImGui.AddLine(draw_list,
             ImVec2(pl_x, pl_y), ImVec2(l_x, l_y), 
             ORANGE, LINE_THICKNESS)
+
+        # if model.bug println("vt: ", vt) end
+        pl_x = l_x
+        pl_y = l_y
+    end
+
+    # ------------------------------------------------------------------------
+    # Render Average weight
+    # ------------------------------------------------------------------------
+    s_y = 0.0
+    pl_y = 0.0 # previously mapped y value
+    pl_x = 0.0 # previously mapped x value
+    data_samples = samples.dendrite_avg_samples
+
+    for t in range_start:range_end
+        s_y = data_samples.samples[t]
+
+        # The sample value needs to be mapped
+        u_x = map_sample_to_unit(Float64(t), Float64(range_start), Float64(range_end))
+        u_y = map_sample_to_unit(s_y, data_samples.min, data_samples.max)
+
+        w_x = map_unit_to_window(u_x, 0.0, canvas_width)
+        # graph space has +Y downward, but the data is oriented as +Y upward
+        # so we flip in unit-space.
+        u_y = 1.0 - u_y
+        w_y = map_unit_to_window(u_y, 0.0, canvas_height)
+        (l_x, l_y) = map_window_to_local(w_x, w_y, canvas_pos)
+
+        CImGui.AddLine(draw_list,
+            ImVec2(pl_x, pl_y), ImVec2(l_x, l_y), 
+            GREEN, LINE_THICKNESS)
 
         # if model.bug println("vt: ", vt) end
         pl_x = l_x

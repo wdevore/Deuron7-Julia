@@ -423,6 +423,15 @@ function set_synapse_input_spike!(model::ModelData, v::String)
     set_changed(model, 0)
 end
 
+function output_dendrite_avg(model::ModelData)
+    model.data["OutputDendriteAvgFiles"]
+end
+function set_dendrite_avg!(model::ModelData, v::String)
+    v = strip_null(v)
+    model.data["OutputDendriteAvgFiles"] = v
+    set_changed(model, 0)
+end
+
 # --------------------------------------------------------------
 # Simulation Setter/Getters
 # --------------------------------------------------------------

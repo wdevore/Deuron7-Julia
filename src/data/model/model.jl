@@ -78,6 +78,7 @@ mutable struct Samples
     soma_psp_samples::SampleData
     soma_apFast_samples::SampleData
     soma_apSlow_samples::SampleData
+    dendrite_avg_samples::SampleData
 
     # Synaptic data
     synapses::Int64
@@ -88,6 +89,7 @@ mutable struct Samples
     # Mostly for validating the merger streams.
     syn_input_samples::SynapticSamples
     
+
     # State managment during simulation run and between spans.
     # Start index of each span
     poi_t::Int64
@@ -99,6 +101,7 @@ mutable struct Samples
         o.soma_apFast_samples = SampleData{Float64}()
         o.soma_apSlow_samples = SampleData{Float64}()
         o.soma_psp_samples = SampleData{Float64}()
+        o.dendrite_avg_samples = SampleData{Float64}()
         o
     end
 end

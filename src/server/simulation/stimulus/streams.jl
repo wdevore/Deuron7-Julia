@@ -164,3 +164,6 @@ function collect_synapse!(samples::Model.Samples, syn::AbstractSynapse, t::Int64
     Model.store_syn_input_sample!(samples, syn.id, Float64(output(syn.stream)), t)
 end
 
+function collect_dendrite!(samples::Model.Samples, dendrite::AbstractDendrite, t::Int64)
+    Model.store_dendrite_avg_sample!(samples, dendrite.average, t)
+end

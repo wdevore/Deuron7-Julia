@@ -4,12 +4,12 @@
   "DataPath": "../data/",
   "OutputPoissonFiles": "poi_samples_span_",
   "OutputSynapseSurgeFiles": "synapse_surge_samples_span_",
+  "OutputSynapseSpikeFiles": "synapse_input_samples_span_",
   "Scroll": 0.0,
   "DataOutputPath": "/media/RAMDisk/",
   "RangeEnd": 2000,
   "SourceStimulus": "stim_2",
-  "Duration": 5000,
-  "AppRootPath": "/home/iposthuman/Documents/Development/Julia/Source/Deuron7-Julia/src/",
+  "Duration": 2000,
   "RangeStart": 1,
   "OutputSynapseWeightFiles": "synapse_weight_samples_span_",
   "OutputSomaSpikeFiles": "soma_spike_samples_span_",
@@ -18,7 +18,7 @@
   "Spans": 5,
   "OutputSomaAPSlowFiles": "soma_apSlow_samples_span_",
   "OutputSynapsePspFiles": "synapse_psp_samples_span_",
-  "InputSynapseSpikeFiles": "synapse_input_samples_span_",
+  "OutputDendriteAvgFiles": "dendrite_avg_samples_span_",
   "TimeScale": 100,
   "OutputStimulusFiles": "stim_samples_span_"
 }
