@@ -90,8 +90,17 @@ mutable struct Synapse <: AbstractSynapse
 	# -----------------------------------
 	# Fall off
 	# -----------------------------------
-   	distanceEfficacy::Float64
-   	distance::Float64       
+	distanceEfficacy::Float64
+	   
+	# The farther the synapse is from the Soma the less of an influence
+	# this synapse has. The function can either be linear or non-linear.
+	# The default is linear.
+	# Note: no matter how far a synapse is it will still have an influence
+	# otherwise it's useless.
+	# distance's value = 1.0 for synapses closest to soma. The farther out
+	# the value reaches a minimum of around ~0.25.
+	# distance is multiplied into soma.psp.
+	distance::Float64
 
     function Synapse(soma::AbstractSoma, dendrite::AbstractDendrite, compartment::AbstractCompartment, model::Model.ModelData)
         o = new()
@@ -167,7 +176,7 @@ function reset!(syn::Synapse)
    	syn.surge = 0.0
    	syn.psp = 0.0
     syn.preT = 0.0
-       
+
 	# Reset weights back to best guess values.
     syn.wMax = syn.compartment.weight_max
    	syn.w = syn.wMax / syn.compartment.weight_divisor
@@ -254,9 +263,9 @@ function triplet_integration(syn::Synapse, span_t::Int64, t::Int64)
 
 	# Return the "value" of this synapse for this "t"
    	value = if syn.excititory 
-       	syn.psp * syn.w
+       	syn.psp * syn.w * syn.distance
    	else
-       	-syn.psp * syn.w # is inhibitory
+       	-syn.psp * syn.w * syn.distance # is inhibitory
    	end
 
 	# Collecting is centralized in streams.jl for consistency.
