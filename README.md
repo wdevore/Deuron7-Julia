@@ -16,9 +16,17 @@ To make sure **CImGui** can run, go and git-clone [CImGui](https://github.com/oc
 Start the server first:
 
 ```
-> julia server.jl 127.0.0.1 2001
+> cd ~/Documents/Development/Julia/Deuron7-Julia/ser/server
+> julia main.jl
 ```
 
+Then launch client
+```
+> cd ~/Documents/Development/Julia/Deuron7-Julia/ser/client
+> julia main.jl
+```
+
+-----------------------------------------------------------
 # com_protocol_base.json
 ```
 {

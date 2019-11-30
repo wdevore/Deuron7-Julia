@@ -7,7 +7,7 @@
   "OutputSynapseSpikeFiles": "synapse_input_samples_span_",
   "Scroll": 0.0,
   "DataOutputPath": "/media/RAMDisk/",
-  "RangeEnd": 2000,
+  "RangeEnd": 1501,
   "SourceStimulus": "stim_2",
   "Duration": 2000,
   "OutputDendriteAvgFiles": "dendrite_avg_samples_span_",
